@@ -287,13 +287,17 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 64577712}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1bbc4ffc8443e514292379ca191d3c89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   camera: {fileID: 1307033019}
   sphere: {fileID: 1854704576186534, guid: 4af9c12d099da674c8974b64d5785fe9, type: 3}
+  incisionDepth: 1
+  mat:
+  - {fileID: 2100000, guid: b71c01962da84ea469e05d122da48635, type: 2}
+  - {fileID: 2100000, guid: 784e4d68ddee5ad468b8b9528dd260c9, type: 2}
 --- !u!114 &64577718
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,14 +305,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 64577712}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6cbb4b6766a2df249b5d5609685fb20d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   camera: {fileID: 1307033019}
   sphere: {fileID: 1854704576186534, guid: 4af9c12d099da674c8974b64d5785fe9, type: 3}
-  incisionDepth: 1
+  incisionDepth: 1.2
 --- !u!1 &77534889
 GameObject:
   m_ObjectHideFlags: 0
@@ -1159,6 +1163,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   camera: {fileID: 1307033019}
   sphere: {fileID: 1854704576186534, guid: 4af9c12d099da674c8974b64d5785fe9, type: 3}
+  incisionDepth: 3
+  mat:
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!64 &355458522
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1934,6 +1942,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   camera: {fileID: 1307033019}
   sphere: {fileID: 0}
+  incisionDepth: 3
+  mat:
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!64 &693274116
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -3739,6 +3751,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   camera: {fileID: 1307033019}
   sphere: {fileID: 0}
+  incisionDepth: 3
+  mat:
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!1 &1272313457
 GameObject:
   m_ObjectHideFlags: 0
