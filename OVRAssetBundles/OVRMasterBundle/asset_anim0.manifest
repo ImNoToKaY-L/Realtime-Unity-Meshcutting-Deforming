@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 4225225870
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 39bde4b7812ba966176e7aed052c8f74
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: af57576da81d5d3ce45807ac11234de6
+HashAppended: 0
+ClassTypes:
+- Class: 74
+  Script: {instanceID: 0}
+Assets:
+- Assets/Oculus/SampleFramework/Usage/HandsTrainExample/Animations/CowHop.anim
+Dependencies: []

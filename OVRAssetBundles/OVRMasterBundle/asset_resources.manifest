@@ -1,0 +1,59 @@
+ManifestFileVersion: 0
+CRC: 15756845
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: c8549fca49bc572cf28bf5fcea9f0f59
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: ae4898faa184be433f26d9a139b0215d
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 109
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: ad074644ff568a14187a3690cfbd7534, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b3d881e962d099f4a8eb492ef7e9a8c0, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+Assets:
+- Assets/Oculus/Avatar/Resources/FallbackTextures/fallback_diffuse_roughness_2048.png
+- Assets/Oculus/Avatar/Resources/FallbackTextures/fallback_diffuse_roughness_256.png
+- Assets/Oculus/Avatar/Resources/Materials/Version1.5/Avatar_PC_SingleComponent.shader
+- Assets/Oculus/VR/Resources/OVRMRUnlitTransparent.shader
+- Assets/Oculus/Avatar/Resources/FallbackTextures/fallback_normal_2048.png
+- Assets/Oculus/VR/Resources/OVRMRChromaKey.cginc
+- Assets/Resources/ONSPSettings.asset
+- Assets/Oculus/Avatar/Resources/Materials/Version1.5/Avatar_Mobile_Loader.shader
+- Assets/Oculus/VR/Resources/Cubemap Blit.shader
+- Assets/Oculus/VR/Resources/OVRMRUnlit.shader
+- Assets/Oculus/Avatar/Resources/Materials/AvatarSurfaceShaderSelfOccluding.shader
+- Assets/Oculus/VR/Resources/Unlit Transparent Color.shader
+- Assets/Oculus/Avatar/Resources/Materials/AvatarSurfaceShaderPBS.shader
+- Assets/Oculus/VR/Resources/OVRMRCameraFrameLit.shader
+- Assets/Oculus/Avatar/Resources/Materials/Version1.5/Avatar_Mobile_CombinedMesh.shader
+- Assets/Oculus/Avatar/Resources/Materials/Expressive/Avatar_Mobile_CombinedMeshExpressive.shader
+- Assets/Oculus/VR/Resources/Underlay Transparent Occluder.shader
+- Assets/Oculus/VR/Resources/Texture2D Blit.shader
+- Assets/Oculus/Avatar/Resources/Materials/Expressive/Avatar_PC_SingleComponentExpressive.shader
+- Assets/Oculus/Avatar/Resources/Materials/AvatarPBRV2Simple.shader
+- Assets/Resources/OVRPlatformToolSettings.asset
+- Assets/Oculus/Avatar/Resources/FallbackTextures/fallback_normal_256.png
+- Assets/Resources/OVRBuildConfig.asset
+- Assets/Oculus/Avatar/Resources/Materials/Expressive/Avatar_Mobile_SingleComponentExpressive.shader
+- Assets/Oculus/VR/Resources/OVRMRCameraFrame.shader
+- Assets/Oculus/Avatar/Resources/Materials/AvatarSurfaceShaderPBSV2.shader
+- Assets/Oculus/Avatar/Resources/FallbackTextures/fallback_diffuse_roughness_1024.png
+- Assets/Oculus/Avatar/Resources/Materials/Version1.5/Avatar_Mobile_SingleComponent.shader
+- Assets/Oculus/Avatar/Resources/Materials/AvatarMaterialStateShader.cginc
+- Assets/Oculus/Avatar/Resources/Materials/Expressive/AvatarEyeLens.shader
+- Assets/Oculus/Avatar/Resources/Materials/AvatarSurfaceShader.shader
+- Assets/Resources/OculusPlatformSettings.asset
+- Assets/Oculus/Avatar/Resources/FallbackTextures/fallback_normal_1024.tif
+- Assets/Oculus/VR/Resources/Underlay Impostor.shader
+Dependencies: []

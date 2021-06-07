@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 3315177888
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 0f838c402804cbd156b72495ed187120
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 55d48f4ad9c3b13330b9eb5ee5686477
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+Assets:
+- Assets/Oculus/SampleFramework/Usage/HandsTrainExample/Shaders/GradientSkybox.shader
+Dependencies: []

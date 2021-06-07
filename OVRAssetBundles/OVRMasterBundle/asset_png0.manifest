@@ -1,0 +1,26 @@
+ManifestFileVersion: 0
+CRC: 3359108354
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: e04bc5840b6e990bd5cff18cc68d2963
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 9e6ad29cbd2df8fbe1a15315db0e51ab
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+Assets:
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/slider_bar.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/translucent_01.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/header.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/button.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/slider_slider.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/separator.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/dialog.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/radio_off.png
+- Assets/Oculus/SampleFramework/Core/DebugUI/Textures/radio_on.png
+Dependencies: []

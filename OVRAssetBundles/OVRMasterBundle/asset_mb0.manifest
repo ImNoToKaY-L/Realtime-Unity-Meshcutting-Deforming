@@ -1,0 +1,35 @@
+ManifestFileVersion: 0
+CRC: 663217294
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 32d1c7df2a6a3364f802f05471a13640
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 16c353b19a242675560194f4af79d7e2
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 64
+  Script: {instanceID: 0}
+- Class: 74
+  Script: {instanceID: 0}
+Assets:
+- Assets/Models/fetus.mb
+Dependencies:
+- E:/academic/IC/DT/simulation_project/cloudflareworkers/VR-Obstetrics-Simulation/simulation_demo/OVRAssetBundles/OVRMasterBundle/asset_jpg0

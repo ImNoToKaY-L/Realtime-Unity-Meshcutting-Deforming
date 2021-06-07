@@ -1,0 +1,233 @@
+fileFormatVersion: 2
+guid: a1089dcdfa4340b48b1ae4cbb6d893ff
+ModelImporter:
+  serializedVersion: 19301
+  internalIDToNameTable:
+  - first:
+      74: -3155042880182849740
+    second: Fetus|Armature circulationAction
+  - first:
+      74: -1481804617553724311
+    second: Fetus|Armature umbilical cordAction
+  - first:
+      74: -8301068884597601697
+    second: Fetus|KeyAction
+  - first:
+      74: -3111302051317811667
+    second: armature fetus|Armature circulationAction
+  - first:
+      74: 2173349697466371438
+    second: armature fetus|Armature umbilical cordAction
+  - first:
+      74: -8254416017531286033
+    second: armature fetus|KeyAction
+  - first:
+      74: 2414867799259675668
+    second: "armature fetus|posici\xF3n fetal"
+  - first:
+      74: 322578082419715030
+    second: Armature umbilical cord|Armature circulationAction
+  - first:
+      74: -7153518187793024993
+    second: Armature umbilical cord|Armature umbilical cordAction
+  - first:
+      74: -8555864184119797576
+    second: Armature umbilical cord|KeyAction
+  - first:
+      74: 4530463845924136004
+    second: preagnant|Armature circulationAction
+  - first:
+      74: -3286480180327582173
+    second: preagnant|Armature umbilical cordAction
+  - first:
+      74: -1326614184279013025
+    second: preagnant|KeyAction
+  - first:
+      74: -8125832021914919068
+    second: armature pregnant|Armature circulationAction
+  - first:
+      74: 3918895617209834064
+    second: armature pregnant|Armature umbilical cordAction
+  - first:
+      74: 977929327702153057
+    second: armature pregnant|KeyAction
+  - first:
+      74: 6482570993984009042
+    second: "armature pregnant|posici\xF3n fetal"
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cartilago
+    second: {fileID: 2100000, guid: c4eea74162cb93b408007fb31f3b7eee, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cordon umbilical
+    second: {fileID: 2100000, guid: db5ab0f84d3700d41b1abfd6eb74f31d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cornea
+    second: {fileID: 2100000, guid: 48c6c96314252f0489ea0605fed6740e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cornea.001
+    second: {fileID: 2100000, guid: e9cc3d7609192fd4aadc784342cba746, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: dientes
+    second: {fileID: 2100000, guid: e4747494b1e491145a458f85583e18f9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: dientes.001
+    second: {fileID: 2100000, guid: 69baf39c0cedfc54b899335d4915165c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hueso_full
+    second: {fileID: 2100000, guid: 456b5910bdba6fe458125b9d596dff83, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "l\xECquido amni\xF3tico"
+    second: {fileID: 2100000, guid: bb615c336e388164f978998ededbce6d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ojos
+    second: {fileID: 2100000, guid: 7e6390e31e210b14faaeb24a16c3faf0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "pesta\xF1as"
+    second: {fileID: 2100000, guid: e6bb71bf40f5a4b4b9447094271ad77e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: piel
+    second: {fileID: 2100000, guid: aa6d5a7236c96cf45985bbf467d49b46, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: placenta_ cara fetal
+    second: {fileID: 2100000, guid: 8ec9ed9f9f221c8409c851558d8265c2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: placenta_ cara materna
+    second: {fileID: 2100000, guid: 16edef691bca61a47b8c861a4368541c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: pupilas
+    second: {fileID: 2100000, guid: bcdf6dffd2b8804428fe52578f330a0b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: skin mother
+    second: {fileID: 2100000, guid: 235955fff36a244499c2a48554eb6075, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: vagina
+    second: {fileID: 2100000, guid: 8c29ce073ad40374a83f54280fe2ce38, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: "\xFAtero"
+    second: {fileID: 2100000, guid: b71c01962da84ea469e05d122da48635, type: 2}
+  materials:
+    materialImportMode: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

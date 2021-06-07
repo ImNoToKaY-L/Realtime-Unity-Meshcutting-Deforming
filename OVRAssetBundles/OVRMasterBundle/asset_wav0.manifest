@@ -1,0 +1,16 @@
+ManifestFileVersion: 0
+CRC: 1921171294
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: df6fdad3f5b2f0858f0b0296b9c98fd9
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 3f7d0c5e0986ec71841622bcb2f9be1c
+HashAppended: 0
+ClassTypes:
+- Class: 83
+  Script: {instanceID: 0}
+Assets:
+- Assets/Oculus/Spatializer/scenes/sounds/sine.wav
+Dependencies: []

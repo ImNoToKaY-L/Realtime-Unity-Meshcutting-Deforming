@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f4f6c478d4a1e845b3319d5e737f6c8, type: 3}
+  m_Name: Uterus
+  m_EditorClassIdentifier: 
+  m_particles:
+  - {x: 0.07499999, y: 1.0228467, z: 0.21069226, w: 1}
+  - {x: 0.07499999, y: 1.0228467, z: 0.11069225, w: 1}
+  - {x: 0.024999993, y: 1.1728468, z: 0.21069226, w: 1}
+  - {x: 0.024999993, y: 1.0978467, z: 0.060692247, w: 1}
+  - {x: 0.024999993, y: 0.92284673, z: 0.11069225, w: 1}
+  - {x: -0.025000019, y: 1.1728468, z: 0.21069226, w: 1}
+  - {x: -0.025000019, y: 1.0978467, z: 0.060692247, w: 1}
+  - {x: -0.025000019, y: 0.92284673, z: 0.11069225, w: 1}
+  - {x: -0.07500002, y: 1.0228467, z: 0.21069226, w: 1}
+  - {x: -0.07500002, y: 1.0228467, z: 0.11069225, w: 1}
+  m_maxParticles: 10
+  m_springIndices: 
+  m_springCoefficients: []
+  m_springRestLengths: []
+  m_shapeIndices: 0400000007000000000000000100000008000000090000000300000006000000020000000500000004000000070000000000000001000000080000000900000003000000060000000200000005000000
+  m_shapeOffsets: 0a00000014000000
+  m_shapeCoefficients:
+  - 0.2
+  - 0.2
+  m_shapeCenters:
+  - {x: -0.000000013698809, y: 1.0478467, z: 0.14069225}
+  - {x: -0.000000013698809, y: 1.0478467, z: 0.14069225}
+  m_triangleIndices: 
+  m_inflatable: 0
+  m_inflatableVolume: 0
+  m_inflatablePressure: 0
+  m_inflatableStiffness: 0
+  m_fixedParticles: 
+  m_rebuildAsset: 0
+  m_boundaryMesh: {fileID: 812672760225173017, guid: 6b03f31d8af7164449f085c431ff08e3,
+    type: 3}
+  m_meshLocalScale: {x: 1, y: 1, z: 1}
+  m_particleSpacing: 0.05
+  m_volumeSampling: 1
+  m_surfaceSampling: 0
+  m_clusterSpacing: 0.2
+  m_clusterRadius: 0.2
+  m_clusterStiffness: 0.2
+  m_linkRadius: 0
+  m_linkStiffness: 1
+  m_referenceShape: 1

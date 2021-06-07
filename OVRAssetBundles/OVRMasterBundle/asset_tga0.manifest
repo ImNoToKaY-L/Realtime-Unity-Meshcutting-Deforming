@@ -1,0 +1,17 @@
+ManifestFileVersion: 0
+CRC: 1523661384
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b4414e294210f3744c02946a6282d9bc
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2ed26e3ad9f6be9c24f85f5f5b54339d
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+Assets:
+- Assets/Oculus/VR/Textures/OculusGoController/OculusGoController_albedo.tga
+- Assets/Oculus/VR/Textures/OculusTouchForQuestAndRiftS/OculusQuestTouchControllerTexture.tga
+Dependencies: []

@@ -1,0 +1,24 @@
+ManifestFileVersion: 0
+CRC: 2731328008
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: a76401a6d1eb7c7ae6332bcd60cc5ee9
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 10a6a558690295dadb3dd990eda0821a
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+Assets:
+- Assets/Oculus/SampleFramework/Usage/GuardianBoundarySystem/Materials/DebugDrawLine.mat
+- Assets/Models/Materials/silhouette_Lady_Silhouette1.mat
+- Assets/Oculus/SampleFramework/Core/Locomotion/Materials/TeleportLaser.mat
+- Assets/Oculus/SampleFramework/Usage/HandsTrainExample/Materials/SkyboxForRealtime.mat
+- Assets/Oculus/VR/Materials/Arrow.mat
+- Assets/Models/Materials/Lady_Material.mat
+Dependencies:
+- E:/academic/IC/DT/simulation_project/cloudflareworkers/VR-Obstetrics-Simulation/simulation_demo/OVRAssetBundles/OVRMasterBundle/asset_shader0

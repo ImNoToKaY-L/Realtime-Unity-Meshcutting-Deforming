@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1ef488540f99a4c55a8e2612ad4da467
+labels:
+- ObiFluid
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - fluidMaterial: {fileID: 2100000, guid: d13c5e195ae374e2c8c0a8f73b1e13cc, type: 2}
+  executionOrder: 0
+  icon: {fileID: 2800000, guid: d1aaaa02ae8dd4da2a59227f5e4a3689, type: 3}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
