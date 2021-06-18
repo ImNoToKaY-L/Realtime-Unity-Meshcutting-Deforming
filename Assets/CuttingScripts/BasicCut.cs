@@ -10,12 +10,13 @@ public class BasicCut : MonoBehaviour
     public Camera camera;
     private bool isCapturingMovement;
     private bool isUpdating;
+
     private Vector3 incisionStart;
     private Vector3 incisionEnd;
     private List<int> relatedTri;
     public GameObject sphere;
     public float incisionDepth = 3f;
-
+    public Matrix4x4 localToWorld;
     private int prevHitTri;
     private List<VertMovement> expandingDirections = new List<VertMovement>();
     private int originalVertLength;
@@ -42,6 +43,7 @@ public class BasicCut : MonoBehaviour
         originalVertLength = transform.GetComponent<MeshFilter>().mesh.vertexCount;
         transform.GetComponent<MeshFilter>().mesh.subMeshCount = 2;
         rend = this.transform.GetComponent<MeshRenderer>();
+        localToWorld = this.transform.localToWorldMatrix;
 
     }
 
@@ -185,7 +187,10 @@ public class BasicCut : MonoBehaviour
         int B1 = vertices.Length + 4;
         int B2 = vertices.Length + 5;
 
-        subtri = new int[12];
+
+        int subLength = 12;
+
+        subtri = new int[subLength];
         int counter = 0;
 
         subtri[counter++] = intersect3;
@@ -203,6 +208,9 @@ public class BasicCut : MonoBehaviour
         subtri[counter++]= intersect2;
         subtri[counter++]= intersect1;
         subtri[counter++]= B2;
+
+
+
         int[] addup = new int[subtri.Length + submesh.Length];
         Array.Copy(submesh, addup, submesh.Length);
         Array.Copy(subtri, 0, addup, submesh.Length, subtri.Length);
@@ -212,6 +220,12 @@ public class BasicCut : MonoBehaviour
         expandingDirections.Add(new VertMovement(intersect2, newVert[IV] - newVert[intersect2]));
         expandingDirections.Add(new VertMovement(intersect3, newVert[GV1] - newVert[intersect3]));
         expandingDirections.Add(new VertMovement(intersect4, newVert[GV2] - newVert[intersect4]));
+
+        newVert[intersect1] += (newVert[IV] - newVert[intersect1]) * 0.05f;
+        newVert[intersect2] += (newVert[IV] - newVert[intersect2]) * 0.05f;
+        newVert[intersect3] += (newVert[GV1] - newVert[intersect3]) * 0.05f;
+        newVert[intersect4] += (newVert[GV2] - newVert[intersect4]) * 0.05f;
+
 
         Array.Copy(originalTri, (index + 1) * 3, newTri, (index + 3) * 3, originalTri.Length - ((index + 1) * 3));
         newvertices = newVert;
@@ -290,7 +304,7 @@ public class BasicCut : MonoBehaviour
         bool istriggered = false;
         if (segIntersection(out Intersection, incisionStart, incisionEnd, v1 + transform.position, v2 + transform.position))
         {
-            //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
+            Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
             if (startORend(Intersection)) startPoint = Intersection - transform.position;
             else endPoint = Intersection - transform.position;
 
@@ -302,7 +316,7 @@ public class BasicCut : MonoBehaviour
         }
         if (segIntersection(out Intersection, incisionStart, incisionEnd, v1 + transform.position, v3 + transform.position))
         {
-            //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
+            Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
             if (startORend(Intersection)) startPoint = Intersection - transform.position;
             else endPoint = Intersection - transform.position;
 
@@ -315,7 +329,7 @@ public class BasicCut : MonoBehaviour
         }
         if (segIntersection(out Intersection, incisionStart, incisionEnd, v2 + transform.position, v3 + transform.position))
         {
-            //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
+            Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
             if (startORend(Intersection)) startPoint = Intersection - transform.position;
             else endPoint = Intersection - transform.position;
 
@@ -434,7 +448,6 @@ public class BasicCut : MonoBehaviour
         }
         else
         {
-            Debug.Log("No intersection between casted line and one of the triangle, cutted through: " + intersectCount);
         }
 
 
@@ -602,13 +615,13 @@ public class BasicCut : MonoBehaviour
         if (isUpdating)
         {
             Ray currentPointing = new Ray(camera.transform.position, incisionEnd - camera.transform.position);
-            Debug.DrawRay(camera.transform.position, incisionEnd - camera.transform.position, Color.green, 1000f);
+            //Debug.DrawRay(camera.transform.position, incisionEnd - camera.transform.position, Color.green, 1000f);
             RaycastHit currentTri;
             int currentIndex;
             Vector3 Intersection;
             Physics.Raycast(currentPointing, out currentTri, 1000.0f);
             currentIndex = currentTri.triangleIndex;
-            Debug.Log("raycast index: " + currentIndex);
+            //Debug.Log("raycast index: " + currentIndex);
             CutCheck(out Intersection, verts[originalTri[currentIndex * 3]], verts[originalTri[currentIndex * 3 + 1]], verts[originalTri[currentIndex * 3 + 2]]);
             Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
 
@@ -619,6 +632,20 @@ public class BasicCut : MonoBehaviour
 
 
 
+        if (Input.GetKeyDown("w"))
+        {
+            RaycastHit hit;
+            Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out hit, 1000.0f))
+            {
+                Ray currentPointing = new Ray(camera.transform.position, hit.point - camera.transform.position);
+                Debug.DrawRay(camera.transform.position, hit.point - camera.transform.position, Color.green, 1000f);
+                Debug.Log("Current pos:" + hit.point);
+            }
+
+        }
+
+
         if (isCapturingMovement)
         {
             RaycastHit hit;
@@ -626,6 +653,7 @@ public class BasicCut : MonoBehaviour
             Ray ray = camera.ScreenPointToRay(mouse);
             if (Physics.Raycast(ray, out hit, 1000.0f))
             {
+
                 if (!relatedTri.Contains(hit.triangleIndex))
                 {
                     relatedTri.Add(hit.triangleIndex);
@@ -648,6 +676,8 @@ public class BasicCut : MonoBehaviour
                             cuttedIndices.Add(relatedTri[i]);
                         }
                     }
+
+
                     Debug.Log("Cuttedindices.size " + cuttedIndices.Count);
 
                     cuttedIndices.Sort();
@@ -660,6 +690,7 @@ public class BasicCut : MonoBehaviour
                         Debug.Log("Now operating: " + cuttedIndices[i]);
 
                         VerticesCut(originalTri, verts,submesh, incisionStart - this.transform.position, incisionEnd - this.transform.position, cuttedIndices[i], out verts, out originalTri,out submesh);
+
                     }
                     UpdateMesh(verts, originalTri,submesh);
 
