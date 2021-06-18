@@ -17,6 +17,8 @@ public class BasicCut : MonoBehaviour
     public GameObject sphere;
     public float incisionDepth = 3f;
     public Matrix4x4 localToWorld;
+    public Matrix4x4 WorldToLocal;
+
     private int prevHitTri;
     private List<VertMovement> expandingDirections = new List<VertMovement>();
     private int originalVertLength;
@@ -44,6 +46,9 @@ public class BasicCut : MonoBehaviour
         transform.GetComponent<MeshFilter>().mesh.subMeshCount = 2;
         rend = this.transform.GetComponent<MeshRenderer>();
         localToWorld = this.transform.localToWorldMatrix;
+        WorldToLocal = this.transform.worldToLocalMatrix;
+        //Vector3 world_v = localToWorld.MultiplyPoint3x4(mf.mesh.vertices[i]);
+
 
     }
 
@@ -302,11 +307,11 @@ public class BasicCut : MonoBehaviour
         Vector3 Intersection;
         Vector3 I1 = Vector3.zero, I2 = Vector3.zero;
         bool istriggered = false;
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, v1 + transform.position, v2 + transform.position))
+        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v1), localToWorld.MultiplyPoint3x4(v2)))
         {
             Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
-            if (startORend(Intersection)) startPoint = Intersection - transform.position;
-            else endPoint = Intersection - transform.position;
+            if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
 
 
             I1 = Intersection;
@@ -314,11 +319,11 @@ public class BasicCut : MonoBehaviour
             istriggered = !istriggered;
 
         }
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, v1 + transform.position, v3 + transform.position))
+        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v1), localToWorld.MultiplyPoint3x4(v3)))
         {
             Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
-            if (startORend(Intersection)) startPoint = Intersection - transform.position;
-            else endPoint = Intersection - transform.position;
+            if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
 
 
             if (I1 == Vector3.zero) I1 = Intersection;
@@ -327,11 +332,11 @@ public class BasicCut : MonoBehaviour
             istriggered = !istriggered;
 
         }
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, v2 + transform.position, v3 + transform.position))
+        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v2), localToWorld.MultiplyPoint3x4(v3)))
         {
             Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
-            if (startORend(Intersection)) startPoint = Intersection - transform.position;
-            else endPoint = Intersection - transform.position;
+            if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
 
             I2 = Intersection;
 
@@ -340,8 +345,8 @@ public class BasicCut : MonoBehaviour
         }
         if (istriggered) Debug.LogError("INTERSECTION ERROR");
 
-        startPoint = startORendV2(I1, I2) ? I1 - transform.position : I2 - transform.position;
-        endPoint = startORendV2(I1, I2) ? I2 - transform.position : I1 - transform.position;
+        startPoint = startORendV2(I1, I2) ? WorldToLocal.MultiplyPoint3x4(I1) : WorldToLocal.MultiplyPoint3x4(I2);
+        endPoint = startORendV2(I1, I2) ? WorldToLocal.MultiplyPoint3x4(I2) : WorldToLocal.MultiplyPoint3x4(I1);
 
 
 
@@ -419,20 +424,20 @@ public class BasicCut : MonoBehaviour
     {
         int intersectCount = 0;
         Vector3 tempInter = Vector3.zero;
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, v1 + transform.position, v2 + transform.position))
+        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v1), localToWorld.MultiplyPoint3x4(v2)))
         {
             intersectCount++;
             tempInter = Intersection;
         }
 
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, v3 + transform.position, v1 + transform.position))
+        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v3), localToWorld.MultiplyPoint3x4(v1)))
         {
             intersectCount++;
             tempInter = Intersection;
         }
 
 
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, v2 + transform.position, v3 + transform.position))
+        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v2), localToWorld.MultiplyPoint3x4(v3)))
         {
             intersectCount++;
             tempInter = Intersection;
@@ -689,7 +694,7 @@ public class BasicCut : MonoBehaviour
 
                         Debug.Log("Now operating: " + cuttedIndices[i]);
 
-                        VerticesCut(originalTri, verts,submesh, incisionStart - this.transform.position, incisionEnd - this.transform.position, cuttedIndices[i], out verts, out originalTri,out submesh);
+                        VerticesCut(originalTri, verts,submesh, WorldToLocal.MultiplyPoint3x4(incisionStart), WorldToLocal.MultiplyPoint3x4(incisionEnd), cuttedIndices[i], out verts, out originalTri,out submesh);
 
                     }
                     UpdateMesh(verts, originalTri,submesh);
