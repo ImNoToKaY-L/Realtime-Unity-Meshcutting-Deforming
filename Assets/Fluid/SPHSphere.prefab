@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 23773807846926644}
   m_Layer: 0
   m_Name: SPHSphere
-  m_TagString: Untagged
+  m_TagString: vertex
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
