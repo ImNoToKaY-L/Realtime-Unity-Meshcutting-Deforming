@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
@@ -303,8 +302,8 @@ public class BasicCut : MonoBehaviour
         edges[0] = Vector3.Distance(v1, v2);
         edges[1] = Vector3.Distance(v1, v3);
         edges[2] = Vector3.Distance(v2, v3);
-
         Vector3 Intersection;
+
         Vector3 I1 = Vector3.zero, I2 = Vector3.zero;
         bool istriggered = false;
         if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v1), localToWorld.MultiplyPoint3x4(v2)))
@@ -312,6 +311,7 @@ public class BasicCut : MonoBehaviour
             //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
             if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
             else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            //planeintersect(out Vector3 temp, incisionStart, incisionEnd, v1, v2, new Vector3(0, 1, 0));
 
 
             I1 = Intersection;
@@ -325,6 +325,7 @@ public class BasicCut : MonoBehaviour
             if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
             else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
 
+            //planeintersect(out Vector3 temp, incisionStart, incisionEnd, v1, v3, new Vector3(0, 1, 0));
 
             if (I1 == Vector3.zero) I1 = Intersection;
             else I2 = Intersection;
@@ -337,6 +338,7 @@ public class BasicCut : MonoBehaviour
             //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
             if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
             else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            //planeintersect(out Vector3 temp, incisionStart, incisionEnd, v3, v2, new Vector3(0, 1, 0));
 
             I2 = Intersection;
 
@@ -397,21 +399,170 @@ public class BasicCut : MonoBehaviour
     }
 
 
+    private bool planeintersect(out Vector3 Intersection, Vector3 planepoint1, Vector3 planepoint2,Vector3 segmentpoint1, Vector3 segmentpoint2, Vector3 gravitydir)
+    {
+        Vector3 tempPoint = planepoint1 + gravitydir;
+        Plane p = new Plane(planepoint1, planepoint2, tempPoint);
+        Vector3 s1 = localToWorld.MultiplyPoint3x4(segmentpoint1);
+        Vector3 s2 = localToWorld.MultiplyPoint3x4(segmentpoint2);
+        Vector3 cp = p.normal;
+        Vector3 dir = Vector3.Normalize(s2 - s1);
+        Ray ray = new Ray(s1, dir);
+        p.Raycast(ray, out float distance);
+        Vector3 tempIntersection = ray.GetPoint(distance);
+        //Instantiate(sphere, tempIntersection, Quaternion.identity, this.transform);
+        float originalLength = Vector3.Distance(s1, s2);
+        float addedUpLength = Vector3.Distance(s1, tempIntersection) + Vector3.Distance(s2, tempIntersection);
+        Debug.Log("added length: " + addedUpLength+", original: "+originalLength);
+        if (addedUpLength > originalLength*1.001f)
+        {
+            Intersection = Vector3.zero;
+            return false;
+        }
+        else
+        {
+            Intersection = tempIntersection;
+            return true;
+        }
+
+
+        Intersection = Vector3.zero;
+
+        return false;
+    }
+
+   
+
+
+    private void PlaneVC(int[] tri, Vector3[] vertices, int[] submesh, Vector3 startPoint, Vector3 endPoint, int index, out Vector3[] newvertices, out int[] newTriangles, out int[] subtri)
+    {
+        Vector3[] localVertices = new Vector3[3];
+        Vector3 v1 = vertices[tri[index * 3]];
+        Vector3 v2 = vertices[tri[index * 3 + 1]];
+        Vector3 v3 = vertices[tri[index * 3 + 2]];
+
+        int indexV1 = tri[index * 3];
+        int indexV2 = tri[index * 3 + 1];
+        int indexV3 = tri[index * 3 + 2];
+
+        localVertices[0] = vertices[tri[index * 3]];
+        localVertices[1] = vertices[tri[index * 3 + 1]];
+        localVertices[2] = vertices[tri[index * 3 + 2]];
+        float[] edges = new float[3];
+        //index 0 refers to edge 12, index 1 to edge 13, index 2 to edge 23
+        edges[0] = Vector3.Distance(v1, v2);
+        edges[1] = Vector3.Distance(v1, v3);
+        edges[2] = Vector3.Distance(v2, v3);
+
+        Vector3 Intersection;
+        Vector3 I1 = Vector3.zero, I2 = Vector3.zero;
+        int counter = 0;
+        if (planeintersect(out Intersection,incisionStart,incisionEnd,v1,v2,new Vector3(0,1,0)))
+        {
+            //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
+            if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+
+
+            I1 = Intersection;
+
+            counter++;
+
+        }
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v3, new Vector3(0, 1, 0)))
+        {
+            //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
+            if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+
+
+            if (I1 == Vector3.zero) I1 = Intersection;
+            else I2 = Intersection;
+
+            counter++;
+
+        }
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v3, v2, new Vector3(0, 1, 0)))
+        {
+            //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
+            if (startORend(Intersection)) startPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+            else endPoint = WorldToLocal.MultiplyPoint3x4(Intersection);
+
+            I2 = Intersection;
+
+            counter++;
+
+        }
+        if (counter!=2) Debug.LogError("INTERSECTION ERROR: "+counter);
+
+        startPoint = startORendV2(I1, I2) ? WorldToLocal.MultiplyPoint3x4(I1) : WorldToLocal.MultiplyPoint3x4(I2);
+        endPoint = startORendV2(I1, I2) ? WorldToLocal.MultiplyPoint3x4(I2) : WorldToLocal.MultiplyPoint3x4(I1);
+
+
+
+
+        int startPointEdge = EdgeLocate(localVertices, startPoint, edges);
+        int endPointEdge = EdgeLocate(localVertices, endPoint, edges);
+        //sum==1 means vertices are on e12 and e13, order doesnt metter so the same applies on the rest
+        int sum = startPointEdge + endPointEdge;
+        int individualVert = 0;
+        int groupedVert1 = 1;
+        int groupedVert2 = 2;
+        int startOrder = 1;
+        int endOrder = 2;
+        switch (sum)
+        {
+            case 1:
+                individualVert = indexV1;
+                groupedVert1 = indexV2;
+                groupedVert2 = indexV3;
+                startOrder = startPointEdge == 0 ? 1 : 2;
+                endOrder = endPointEdge == 1 ? 2 : 1;
+                break;
+
+            case 2:
+                individualVert = indexV2;
+                groupedVert1 = indexV3;
+                groupedVert2 = indexV1;
+                startOrder = startPointEdge == 0 ? 2 : 1;
+                endOrder = endPointEdge == 0 ? 2 : 1;
+                break;
+
+            case 3:
+                individualVert = indexV3;
+                groupedVert1 = indexV1;
+                groupedVert2 = indexV2;
+                startOrder = startPointEdge == 1 ? 1 : 2;
+                endOrder = endPointEdge == 1 ? 1 : 2;
+                break;
+
+            default:
+                Debug.LogError("None of the cases are triggered, current sum: " + sum);
+                break;
+        }
+        //IncisionCreation(tri,vertices,startPoint, endPoint, index, individualVert, groupedVert1, groupedVert2, startOrder, endOrder,out newvertices,out newTriangles);
+        IncisionCreationTest(tri, vertices, submesh, startPoint, endPoint, index, individualVert, groupedVert1, groupedVert2, startOrder, endOrder, out newvertices, out newTriangles, out subtri);
+
+
+    }
+
+
     private void UpdateMesh(Vector3[] vertices, int[] triangles,int[] submesh)
     {
         Destroy(this.gameObject.GetComponent<MeshCollider>());
         Vector2[] uvs = new Vector2[vertices.Length];
 
-        for (int i = 0; i < uvs.Length; i++)
-        {
-            uvs[i] = new Vector2(vertices[i].x, vertices[i].z);
-        }
+        //for (int i = 0; i < uvs.Length; i++)
+        //{
+        //    uvs[i] = new Vector2(-1*vertices[i].y, vertices[i].z);
+        //}
 
         transform.GetComponent<MeshFilter>().mesh.vertices = vertices;
-        transform.GetComponent<MeshFilter>().mesh.uv = uvs;
-        transform.GetComponent<MeshFilter>().mesh.SetTriangles(triangles, 0);
-        transform.GetComponent<MeshFilter>().mesh.SetTriangles(submesh, 1);
-        rend.materials = mat;
+        //transform.GetComponent<MeshFilter>().mesh.uv = uvs;
+        //transform.GetComponent<MeshFilter>().mesh.SetTriangles(triangles, 0);
+        //transform.GetComponent<MeshFilter>().mesh.SetTriangles(submesh, 1);
+        transform.GetComponent<MeshFilter>().mesh.triangles = triangles;
+        //rend.materials = mat;
         transform.GetComponent<MeshFilter>().mesh.RecalculateNormals();
 
         this.gameObject.AddComponent<MeshCollider>();
@@ -424,20 +575,39 @@ public class BasicCut : MonoBehaviour
     {
         int intersectCount = 0;
         Vector3 tempInter = Vector3.zero;
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v1), localToWorld.MultiplyPoint3x4(v2)))
+        //if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v1), localToWorld.MultiplyPoint3x4(v2)))
+        //{
+        //    intersectCount++;
+        //    tempInter = Intersection;
+        //}
+
+        //if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v3), localToWorld.MultiplyPoint3x4(v1)))
+        //{
+        //    intersectCount++;
+        //    tempInter = Intersection;
+        //}
+
+
+        //if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v2), localToWorld.MultiplyPoint3x4(v3)))
+        //{
+        //    intersectCount++;
+        //    tempInter = Intersection;
+        //}
+
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v2, new Vector3(0, 1, 0)))
         {
             intersectCount++;
             tempInter = Intersection;
         }
 
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v3), localToWorld.MultiplyPoint3x4(v1)))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v3, new Vector3(0, 1, 0)))
         {
             intersectCount++;
             tempInter = Intersection;
         }
 
 
-        if (segIntersection(out Intersection, incisionStart, incisionEnd, localToWorld.MultiplyPoint3x4(v2), localToWorld.MultiplyPoint3x4(v3)))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v2, v3, new Vector3(0, 1, 0)))
         {
             intersectCount++;
             tempInter = Intersection;
@@ -511,9 +681,6 @@ public class BasicCut : MonoBehaviour
             }
         }
 
-
-
-
         return resultDir;
     }
 
@@ -528,27 +695,12 @@ public class BasicCut : MonoBehaviour
         Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
         int[] originalTri = mesh.triangles;
         Vector3[] verts = mesh.vertices;
-        int[] submesh = mesh.GetTriangles(1);
+        //int[] submesh = mesh.GetTriangles(1);
+        int[] submesh = mesh.GetTriangles(0);
 
         if (Input.GetMouseButtonDown(1))
         {
-            //Destroy(this.gameObject.GetComponent<MeshCollider>());
-
-            //Mesh currentmesh = transform.GetComponent<MeshFilter>().mesh;
-            //Vector3[] currentvert = currentmesh.vertices;
-            //for (int i = 0; i < expandingDirections.Count; i++)
-            //{
-            //    currentvert[expandingDirections[i].vertIndex] += expandingDirections[i].direction.normalized * 0.02f;
-
-            //}
-
-
-            //transform.GetComponent<MeshFilter>().mesh.vertices = currentvert;
-
-            //mesh.RecalculateNormals();
-
-            //this.gameObject.AddComponent<MeshCollider>();
-
+            long startOfPreindexing = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             allVertices.Clear();
 
             for (int i = 0; i < verts.Length; i++)
@@ -573,6 +725,8 @@ public class BasicCut : MonoBehaviour
                 v.CalculateDir(mesh);
             }
 
+            long endOfPreindexing = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            Debug.Log("Preindexing time cost: " + (endOfPreindexing - startOfPreindexing));
 
             foreach (var i in GameObject.FindGameObjectsWithTag("vertex")){
                 Destroy(i);
@@ -583,7 +737,7 @@ public class BasicCut : MonoBehaviour
             if (Physics.Raycast(ray, out hit, 1000.0f))
             {
                 int hitvertindex = LocateVertex(hit.point, hit.triangleIndex, mesh);
-                Instantiate(sphere, localToWorld.MultiplyPoint3x4(verts[hitvertindex]), Quaternion.identity, this.transform);
+                //Instantiate(sphere, localToWorld.MultiplyPoint3x4(verts[hitvertindex]), Quaternion.identity, this.transform);
                 movingIndex = hitvertindex;
                 isMoving = true;
                 movingVertices.Add(allVertices[hitvertindex]);
@@ -621,7 +775,7 @@ public class BasicCut : MonoBehaviour
                     verts[v.index] -= dir.normalized * 0.01f;
                     foreach(var neighbour in v.neighbours)
                     {
-                        if(Vector3.Distance(verts[v.index],verts[neighbour])>=1.2 * Vector3.Magnitude(v.directions[neighbour])
+                        if(Vector3.Distance(verts[v.index],verts[neighbour])>=1.1 * Vector3.Magnitude(v.directions[neighbour])
                             || Vector3.Distance(verts[v.index], verts[neighbour]) <= 0.2 * Vector3.Magnitude(v.directions[neighbour])){
                             neighboursToAdd.Add(allVertices[neighbour]);
                         }
@@ -642,6 +796,56 @@ public class BasicCut : MonoBehaviour
 
 
                 UpdateMesh(verts, mesh.GetIndices(0), mesh.GetIndices(1));
+            }
+
+
+            if (Input.GetKeyDown("t"))
+            {
+                RaycastHit hit;
+                Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+                Physics.Raycast(ray, out hit, 1000.0f);
+                long startOfTest = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
+                for (int c = 0; c < 200; c++)
+                {                    int movinginto;
+                    Vector3 dir = DirectionSelection(allVertices[movingIndex], hit.point, out movinginto, mesh);
+
+                    HashSet<Vertex> neighboursToAdd = new HashSet<Vertex>();
+
+                    foreach (var v in movingVertices)
+                    {
+                        verts[v.index] -= dir.normalized * 0.01f;
+                        foreach (var neighbour in v.neighbours)
+                        {
+                            if (Vector3.Distance(verts[v.index], verts[neighbour]) >= 1.1 * Vector3.Magnitude(v.directions[neighbour])
+                                || Vector3.Distance(verts[v.index], verts[neighbour]) <= 0.2 * Vector3.Magnitude(v.directions[neighbour]))
+                            {
+                                neighboursToAdd.Add(allVertices[neighbour]);
+                            }
+                        }
+                    }
+
+
+
+                    if (Vector3.Magnitude(allVertices[movingIndex].directions[movinginto]) * 0.01f >= Vector3.Distance(verts[movingIndex], verts[movinginto]))
+                    {
+                        movingIndex = movinginto;
+                        movingVertices.Add(allVertices[movinginto]);
+                    }
+                    foreach (var i in neighboursToAdd)
+                    {
+                        movingVertices.Add(i);
+                    }
+
+
+                    UpdateMesh(verts, mesh.GetIndices(0), mesh.GetIndices(1));
+
+                }
+                long endOfTest = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+                Debug.Log("Test Cost: " + (endOfTest - startOfTest));
+                Debug.Log("Average: "+ ((endOfTest - startOfTest)/200));
+
+
             }
 
         }
@@ -775,10 +979,10 @@ public class BasicCut : MonoBehaviour
                 if (!isUpdating)
                 {
                     incisionEnd = hit.point;
-                    Debug.DrawLine(incisionStart, incisionEnd, Color.red, 10000f);
+                    //Debug.DrawLine(incisionStart, incisionEnd, Color.red, 10000f);
                     List<int> cuttedIndices = new List<int>();
                     Vector3 Intersection;
-                    for (int i = 0; i < relatedTri.Count; i++)
+                    for (int i = 0; i < relatedTri.Count-1; i++)
                     {
                         if (relatedTri[i]>=0&&CutCheck(out Intersection, verts[originalTri[relatedTri[i] * 3]], verts[originalTri[relatedTri[i] * 3 + 1]], verts[originalTri[relatedTri[i] * 3 + 2]]) && !cuttedIndices.Contains(relatedTri[i]))
                         {
@@ -798,13 +1002,15 @@ public class BasicCut : MonoBehaviour
 
                         Debug.Log("Now operating: " + cuttedIndices[i]);
 
-                        VerticesCut(originalTri, verts,submesh, WorldToLocal.MultiplyPoint3x4(incisionStart), WorldToLocal.MultiplyPoint3x4(incisionEnd), cuttedIndices[i], out verts, out originalTri,out submesh);
+                        //VerticesCut(originalTri, verts,submesh, WorldToLocal.MultiplyPoint3x4(incisionStart), WorldToLocal.MultiplyPoint3x4(incisionEnd), cuttedIndices[i], out verts, out originalTri,out submesh);
+                        PlaneVC(originalTri, verts, submesh, WorldToLocal.MultiplyPoint3x4(incisionStart), WorldToLocal.MultiplyPoint3x4(incisionEnd), cuttedIndices[i], out verts, out originalTri, out submesh);
+                        //TODO: NOW
 
                     }
                     UpdateMesh(verts, originalTri,submesh);
-
+                    int lastRelatedIndex = relatedTri[relatedTri.Count-1];
                     relatedTri.Clear();
-
+                    relatedTri.Add(lastRelatedIndex);
                     isUpdating = true;
                 }
 

@@ -9,6 +9,7 @@ TagManager:
   - Belly
   - BellyCutted
   - vertex
+  - Cutter
   layers:
   - Default
   - TransparentFX
