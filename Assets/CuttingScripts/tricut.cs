@@ -283,7 +283,7 @@ public class tricut : MonoBehaviour
         Plane p = new Plane(planepoint1, planepoint2, tempPoint);
         Vector3 s1 = localToWorld.MultiplyPoint3x4(segmentpoint1);
         Vector3 s2 = localToWorld.MultiplyPoint3x4(segmentpoint2);
-        Vector3 cp = p.normal;
+
         Vector3 dir = Vector3.Normalize(s2 - s1);
         Ray ray = new Ray(s1, dir);
         p.Raycast(ray, out float distance);
@@ -291,16 +291,43 @@ public class tricut : MonoBehaviour
         //Instantiate(sphere, tempIntersection, Quaternion.identity, this.transform);
         float originalLength = Vector3.Distance(s1, s2);
         float addedUpLength = Vector3.Distance(s1, tempIntersection) + Vector3.Distance(s2, tempIntersection);
-        if (addedUpLength > originalLength * 1.00001f)
-        {
-            Intersection = Vector3.zero;
-            return false;
-        }
-        else
+
+
+        if (p.GetSide(s1) != p.GetSide(s2))
         {
             Intersection = tempIntersection;
             return true;
         }
+        //else if(addedUpLength<=originalLength*1.1f)
+        //{
+        //    Debug.Log("length edge");
+        //    Intersection = tempIntersection;
+        //    return true;
+        //}
+        else
+        {
+            //Debug.LogWarning("length difference: added:"+addedUpLength+" original:"+originalLength);
+            Intersection = tempIntersection;
+            return false;
+        }
+
+
+
+
+
+
+
+
+        //if (addedUpLength > originalLength * 1.00001f)
+        //{
+        //    Intersection = Vector3.zero;
+        //    return false;
+        //}
+        //else
+        //{
+        //    Intersection = tempIntersection;
+        //    return true;
+        //}
 
     }
 
@@ -543,6 +570,7 @@ public class tricut : MonoBehaviour
 
 
         Intersection = tempInter;
+        //return true;
 
         if (intersectCount == 2)
         {
@@ -554,9 +582,9 @@ public class tricut : MonoBehaviour
         {
             Debug.LogWarning("Not intersected triangle detected, intersection count: " + intersectCount);
             
-            if(Intersection!=Vector3.zero)
+            //if(Intersection!=Vector3.zero)
             
-            Instantiate(redsphere, Intersection, Quaternion.identity, this.transform);
+            //Instantiate(redsphere, Intersection, Quaternion.identity, this.transform);
 
         }
 
@@ -668,8 +696,18 @@ public class tricut : MonoBehaviour
 
             incisionEnd = hit.point;
 
+
+
+
+
+
             Vector3 tempPoint = incisionStart + camera.transform.forward;
             cutPlane = new Plane(incisionStart, incisionEnd, tempPoint);
+
+
+            //Vector3 midpoint = incisionStart + (incisionEnd - incisionStart) / 2;
+            //plane.transform.position = midpoint;
+            //plane.transform.rotation = Quaternion.FromToRotation(plane.GetComponent<MeshFilter>().mesh.normals[0], cutPlane.normal);
 
             //DrawPlane(incisionStart, cutPlane.normal);
 

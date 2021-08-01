@@ -7,7 +7,12 @@ using UnityEngine;
 namespace DataStructures.ViliWonka.Tests
 {
 
-    using KDTree;
+using KDTree;
+    using System;
+    using Unity.Burst;
+    using Unity.Collections;
+using Unity.Jobs;
+
     public enum QType
     {
 
@@ -26,7 +31,7 @@ namespace DataStructures.ViliWonka.Tests
         [Range(0f, 100f)]
         public float Radius = 0.1f;
 
-        public bool DrawQueryNodes = true;
+        public bool DrawQueryNodes = false;
 
         private Vector3 PreviousPos;
 
@@ -41,7 +46,30 @@ namespace DataStructures.ViliWonka.Tests
 
         void Awake()
         {
+            localToWorld = GameObject.FindGameObjectWithTag("Belly").transform.localToWorldMatrix;
+            worldToLocal = GameObject.FindGameObjectWithTag("Belly").transform.worldToLocalMatrix;
+        }
 
+
+        [BurstCompile(CompileSynchronously = true)]
+        private struct Initialisation : IJob
+        {
+            [ReadOnly]
+            public NativeArray<Vector3> Input;
+            public Matrix4x4 localToWorldMatrix;
+            public Matrix4x4 worldToLocalMatrix;
+
+            [WriteOnly]
+            public NativeArray<Vector3> Output;
+
+            public void Execute()
+            {
+                for (int i = 0; i < Input.Length; i++)
+                {
+                    Output[i] = localToWorldMatrix.MultiplyPoint3x4(Input[i]);
+                }
+                
+            }
         }
 
 
@@ -62,17 +90,40 @@ namespace DataStructures.ViliWonka.Tests
                     vertices = new Vector3[mesh.vertexCount];
                     rendVert = mesh.vertices;
 
-                    localToWorld = GameObject.FindGameObjectWithTag("Belly").transform.localToWorldMatrix;
-                    worldToLocal = GameObject.FindGameObjectWithTag("Belly").transform.worldToLocalMatrix;
+                    long StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-                    for (int i = 0; i < mesh.vertexCount; i++)
+
+                    NativeArray<Vector3> jobInput = new NativeArray<Vector3>(mesh.vertices, Allocator.TempJob);
+                    NativeArray<Vector3> jobOut = new NativeArray<Vector3>(vertices, Allocator.TempJob);
+
+                    var initialisation = new Initialisation
                     {
-                        vertices[i] = localToWorld.MultiplyPoint3x4(mesh.vertices[i]);
-                    }
+                        Input = jobInput,
+                        localToWorldMatrix = localToWorld,
+                        worldToLocalMatrix = worldToLocal,
+                        Output = jobOut
+
+                    };
+
+
+                    initialisation.Schedule().Complete();
+
+
+                    vertices = jobOut.ToArray();
+
+                    jobInput.Dispose();
+                    jobOut.Dispose();
+
+                    Debug.Log("Initialisation cost: " + (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
+
+
                     query = new KDQuery();
 
                     PreviousPos = transform.position;
+                    StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
                     tree = new KDTree(vertices, 32);
+                    Debug.Log("KDTree initialise cost: " + (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
+
                     initialised = true;
                     Debug.Log("Initialisation complete");
                 }
@@ -112,7 +163,7 @@ namespace DataStructures.ViliWonka.Tests
 
 
                     PreviousPos = transform.position;
-
+                    Debug.Log("Result Indices size " + resultIndices.Count);
                     for (int i = 0; i < resultIndices.Count; i++)
                     {
 
@@ -184,8 +235,10 @@ namespace DataStructures.ViliWonka.Tests
                     GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.RecalculateNormals();
                     GameObject.FindGameObjectWithTag("Belly").AddComponent<MeshCollider>();
 
+                    long StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
                     tree = new KDTree(vertices, 32);
+                    Debug.Log("KDTree update cost: " +(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
                 }
 
             }
@@ -193,75 +246,5 @@ namespace DataStructures.ViliWonka.Tests
 
         }
 
-        //private void OnDrawGizmos()
-        //{
-
-        //    if (query == null)
-        //    {
-        //        return;
-        //    }
-
-        //    Vector3 size = 0.02f * Vector3.one;
-
-
-        //    var resultIndices = new List<int>();
-
-        //    Color markColor = Color.red;
-        //    markColor.a = 0.05f;
-        //    Gizmos.color = markColor;
-
-        //    switch (QueryType)
-        //    {
-
-        //        case QType.ClosestPoint:
-        //            {
-
-        //                query.ClosestPoint(tree, transform.position, resultIndices);
-        //            }
-        //            break;
-
-        //        case QType.KNearest:
-        //            {
-
-        //                query.KNearest(tree, transform.position, K, resultIndices);
-        //            }
-        //            break;
-
-        //        case QType.Radius:
-        //            {
-
-        //                query.Radius(tree, transform.position, Radius, resultIndices);
-
-        //                Gizmos.DrawWireSphere(transform.position, Radius);
-        //            }
-        //            break;
-
-        //        case QType.Interval:
-        //            {
-
-        //                query.Interval(tree, transform.position - IntervalSize / 2f, transform.position + IntervalSize / 2f, resultIndices);
-
-        //                Gizmos.DrawWireCube(transform.position, IntervalSize);
-        //            }
-        //            break;
-
-        //        default:
-        //            break;
-        //    }
-
-        //    for (int i = 0; i < resultIndices.Count; i++)
-        //    {
-
-        //        Gizmos.DrawCube(vertices[resultIndices[i]], 2f * size);
-        //    }
-
-        //    Gizmos.color = Color.green;
-        //    Gizmos.DrawCube(transform.position, 1f * size);
-
-        //    if (DrawQueryNodes)
-        //    {
-        //        query.DrawLastQuery();
-        //    }
-        //}
     }
 }
