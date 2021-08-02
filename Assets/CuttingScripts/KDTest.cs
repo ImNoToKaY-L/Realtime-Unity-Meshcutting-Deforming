@@ -13,17 +13,16 @@ using KDTree;
     using Unity.Collections;
 using Unity.Jobs;
 
-    public enum QType
+    public enum BenchMarkType
     {
-
-        ClosestPoint,
-        KNearest,
-        Radius,
-        Interval
+        ParalleledBruteForce,
+        KDTree
     }
+
 
     public class KDTest : MonoBehaviour
     {
+        public BenchMarkType structureType;
         private Vector3[] vertices;
 
         private Vector3[] rendVert;
@@ -72,6 +71,36 @@ using Unity.Jobs;
             }
         }
 
+        [BurstCompile(CompileSynchronously = true,FloatPrecision =FloatPrecision.High)]
+        private struct BruteForceQuerying : IJob
+        {
+            [ReadOnly]
+            public NativeArray<Vector3> WorldPositionVertices;
+            public float radius;
+            public Vector3 queryingCenter;
+            [WriteOnly]
+            public NativeArray<int> result;
+
+            public void Execute()
+            {
+                for (int i = 0; i < result.Length; i++)
+                {
+                    result[i] = -1;
+                }
+
+
+                int Counter = 0;
+                for(int i = 0; i < WorldPositionVertices.Length; i++)
+                {
+                    if (Vector3.Distance(queryingCenter, WorldPositionVertices[i]) <= radius)
+                    {
+                        result[Counter] = i;
+                        Counter++;
+                    }
+                }
+            }
+        }
+
 
         void Update()
         {
@@ -117,12 +146,23 @@ using Unity.Jobs;
                     Debug.Log("Initialisation cost: " + (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
 
 
+
+
+                    if(structureType == BenchMarkType.KDTree)
+                    {
+                        PreviousPos = transform.position;
+                        StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+                        tree = new KDTree(vertices, 32);
+                        Debug.Log("KDTree initialise cost: " + (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
+                    }
+                    else
+                    {
+                        Debug.Log("Using Paralleled solution, no extra intialisation required");
+                    }
+
                     query = new KDQuery();
 
-                    PreviousPos = transform.position;
-                    StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-                    tree = new KDTree(vertices, 32);
-                    Debug.Log("KDTree initialise cost: " + (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
+
 
                     initialised = true;
                     Debug.Log("Initialisation complete");
@@ -133,7 +173,6 @@ using Unity.Jobs;
             if (Input.GetKeyDown("a"))
             {
                 PreviousPos = transform.position;
-
 
             }
 
@@ -154,16 +193,42 @@ using Unity.Jobs;
 
                     var resultIndices = new List<int>();
 
-                    Color markColor = Color.red;
-                    markColor.a = 0.05f;
-                    //Gizmos.color = markColor;
+                    if(structureType == BenchMarkType.KDTree)
+                    {
+                        query.Radius(tree, PreviousPos, Radius, resultIndices);
+                    }
+                    else
+                    {
+                        long timestep = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
+                        NativeArray<Vector3> verticesInput = new NativeArray<Vector3>(vertices,Allocator.TempJob);
+                        NativeArray<int> result = new NativeArray<int>(vertices.Length,Allocator.TempJob);
 
-                    query.Radius(tree, PreviousPos, Radius, resultIndices);
+                        var bfQuerying = new BruteForceQuerying
+                        {
+                            WorldPositionVertices = verticesInput,
+                            radius = Radius,
+                            queryingCenter = PreviousPos,
+                            result = result
+                        };
+
+                        bfQuerying.Schedule().Complete();
+                        int queryingCounter = 0;
+                        while (result[queryingCounter] >= 0)
+                        {
+                            resultIndices.Add(result[queryingCounter]);
+                            queryingCounter++;
+                        }
+                        verticesInput.Dispose();
+                        result.Dispose();
+
+                        Debug.Log("Paralleled solution cost: "+((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - timestep));
+                    }
+
 
 
                     PreviousPos = transform.position;
-                    Debug.Log("Result Indices size " + resultIndices.Count);
+                    //Debug.Log("Result Indices size " + resultIndices.Count);
                     for (int i = 0; i < resultIndices.Count; i++)
                     {
 
@@ -220,25 +285,25 @@ using Unity.Jobs;
                     
 
 
-
-
-                    //Gizmos.color = Color.green;
-                    //Gizmos.DrawCube(transform.position, 1f * size);
-
-                    if (DrawQueryNodes)
-                    {
-                        query.DrawLastQuery();
-                    }
+                    //if (DrawQueryNodes)
+                    //{
+                    //    query.DrawLastQuery();
+                    //}
 
                     Destroy(GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshCollider>());
                     GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertices = rendVert;
                     GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.RecalculateNormals();
                     GameObject.FindGameObjectWithTag("Belly").AddComponent<MeshCollider>();
 
-                    long StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-                    tree = new KDTree(vertices, 32);
-                    Debug.Log("KDTree update cost: " +(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
+                    if(structureType == BenchMarkType.KDTree)
+                    {
+                        long StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+                        tree = new KDTree(vertices, 32);
+                        Debug.Log("KDTree update cost: " + (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
+                    }
+
+
                 }
 
             }

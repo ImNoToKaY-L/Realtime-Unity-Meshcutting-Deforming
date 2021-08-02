@@ -29,7 +29,14 @@ namespace DataStructures.ViliWonka.Tests {
 
     using KDTree;
 
+    public enum QType
+    {
 
+        ClosestPoint,
+        KNearest,
+        Radius,
+        Interval
+    }
 
     public class KDTreeQueryTests : MonoBehaviour {
 

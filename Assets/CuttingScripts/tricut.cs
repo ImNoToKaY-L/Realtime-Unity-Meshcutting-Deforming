@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Unity.Burst;
+using Unity.Jobs;
+using Unity.Collections;
 
 public class tricut : MonoBehaviour
 {
@@ -17,15 +20,20 @@ public class tricut : MonoBehaviour
     public GameObject redsphere;
 
     public float incisionDepth = 3f;
-    public Matrix4x4 localToWorld;
-    public Matrix4x4 WorldToLocal;
+    private Matrix4x4 localToWorld;
+    private Matrix4x4 WorldToLocal;
     public float judgingLimit = 0.8f;
-    public int movingIndex;
+
+    //public GameObject plane;
+    public GameObject RaycastAssistant;
 
 
     public static HashSet<int> positive_index = new HashSet<int>();
     public static HashSet<int> negative_index = new HashSet<int>();
     public static HashSet<int> bot_index = new HashSet<int>();
+
+
+    private Vector3 gravity;
 
     public static Plane cutPlane;
     private Vector3 previousMousePos;
@@ -79,7 +87,43 @@ public class tricut : MonoBehaviour
         }
     }
 
+    [BurstCompile(CompileSynchronously = true)]
+    private struct SharedVertexSearch : IJob
+    {
+        [ReadOnly]
+        public NativeArray<int> triangles;
+        public int vertexA;
+        public int vertexB;
 
+        [WriteOnly]
+        public NativeArray<int> sharedA;
+        public NativeArray<int> sharedB;
+
+
+        public void Execute()
+        {
+            int CounterA = 0;
+            int CounterB = 0;
+            for (int i = 0; i < triangles.Length/3; i++)
+            {
+               for(int j = 0; j < 3; j++)
+                {
+                    if (triangles[i * 3 + j] == vertexA)
+                    {
+                        sharedA[CounterA] = i;
+                        CounterA++;
+                    }
+
+                    if (triangles[i * 3 + j] == vertexB)
+                    {
+                        sharedB[CounterB] = i;
+                        CounterB++;
+                    }
+                }
+            }
+
+        }
+    }
 
     void Start()
     {
@@ -88,6 +132,9 @@ public class tricut : MonoBehaviour
         rend = this.transform.GetComponent<MeshRenderer>();
         localToWorld = this.transform.localToWorldMatrix;
         WorldToLocal = this.transform.worldToLocalMatrix;
+
+        gravity = camera.transform.forward;
+
         //Vector3 world_v = localToWorld.MultiplyPoint3x4(mf.mesh.vertices[i]);
     }
 
@@ -200,8 +247,8 @@ public class tricut : MonoBehaviour
         newTri[index * 3 + 7] = intersect3;
         newTri[index * 3 + 8] = GV1;
 
-        Vector3 BV1 = newVert[intersect1] + camera.transform.forward.normalized* incisionDepth;
-        Vector3 BV2 = newVert[intersect2] + camera.transform.forward.normalized * incisionDepth;
+        Vector3 BV1 = newVert[intersect1] + gravity.normalized* incisionDepth;
+        Vector3 BV2 = newVert[intersect2] + gravity.normalized * incisionDepth;
         newVert[vertices.Length + 4] = BV1;
         newVert[vertices.Length + 5] = BV2;
         int B1 = vertices.Length + 4;
@@ -261,6 +308,8 @@ public class tricut : MonoBehaviour
 
     }
 
+    
+
 
 
     private bool startORendV2(Vector3 I1, Vector3 I2)
@@ -312,22 +361,6 @@ public class tricut : MonoBehaviour
         }
 
 
-
-
-
-
-
-
-        //if (addedUpLength > originalLength * 1.00001f)
-        //{
-        //    Intersection = Vector3.zero;
-        //    return false;
-        //}
-        //else
-        //{
-        //    Intersection = tempIntersection;
-        //    return true;
-        //}
 
     }
 
@@ -386,7 +419,7 @@ public class tricut : MonoBehaviour
         int counter = 0;
         int reshapeCounter = 0;
         List<int> reshapeIndex = new List<int>();
-        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v2, camera.transform.forward))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v2, gravity))
         {
             //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
             if (I1 == Vector3.zero) I1 = Intersection;
@@ -397,7 +430,7 @@ public class tricut : MonoBehaviour
             counter++;
 
         }
-        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v3, camera.transform.forward))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v3, gravity))
         {
             //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
 
@@ -409,7 +442,7 @@ public class tricut : MonoBehaviour
             counter++;
 
         }
-        if (planeintersect(out Intersection, incisionStart, incisionEnd, v3, v2, camera.transform.forward))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v3, v2, gravity))
         {
             //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
             if (I1 == Vector3.zero) I1 = Intersection;
@@ -473,13 +506,6 @@ public class tricut : MonoBehaviour
                 break;
         }
 
-        //if (reshapeCounter == 1)
-        //{
-        //    Vector3 reshape_vertex = vertices[reshapeIndex[0]];
-        //    float spToReshape = Vector3.Distance(reshape_vertex, startPoint);
-        //    float epToReshape = Vector3.Distance(reshape_vertex, endPoint);
-        //    Single_incision_creation(tri, vertices, submesh, reshape_vertex, startPoint, endPoint, startOrder, endOrder, index, individualVert, groupedVert1, groupedVert2, reshapeIndex[0], out newvertices, out newTriangles, out subtri);
-        //}
 
 
             Common_incision_creation(tri, vertices, submesh, startPoint, endPoint, index, individualVert, groupedVert1, groupedVert2, startOrder, endOrder, out newvertices, out newTriangles, out subtri);
@@ -497,16 +523,10 @@ public class tricut : MonoBehaviour
         Destroy(this.gameObject.GetComponent<MeshCollider>());
         Vector2[] uvs = new Vector2[vertices.Length];
 
-        //for (int i = 0; i < uvs.Length; i++)
-        //{
-        //    uvs[i] = new Vector2(-1*vertices[i].y, vertices[i].z);
-        //}
 
         transform.GetComponent<MeshFilter>().mesh.vertices = vertices;
-        //transform.GetComponent<MeshFilter>().mesh.uv = uvs;
         transform.GetComponent<MeshFilter>().mesh.SetTriangles(triangles, 0);
         transform.GetComponent<MeshFilter>().mesh.SetTriangles(submesh, 1);
-        //transform.GetComponent<MeshFilter>().mesh.triangles = triangles;
         rend.materials = mat;
         transform.GetComponent<MeshFilter>().mesh.RecalculateNormals();
 
@@ -542,27 +562,27 @@ public class tricut : MonoBehaviour
     }
 
 
-    private bool CutCheck(out Vector3 Intersection, Vector3 v1, Vector3 v2, Vector3 v3)
+    private int CutCheck(out Vector3 Intersection, Vector3 v1, Vector3 v2, Vector3 v3)
     {
         int intersectCount = 0;
         Vector3 tempInter = Vector3.zero;
 
 
-        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v2, camera.transform.forward))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v2, gravity))
         {
             intersectCount++;
             tempInter = Intersection;
 
         }
 
-        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v3, camera.transform.forward))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v1, v3, gravity))
         {
             intersectCount++;
             tempInter = Intersection;
         }
 
 
-        if (planeintersect(out Intersection, incisionStart, incisionEnd, v2, v3, camera.transform.forward))
+        if (planeintersect(out Intersection, incisionStart, incisionEnd, v2, v3, gravity))
         {
             intersectCount++;
             tempInter = Intersection;
@@ -575,7 +595,7 @@ public class tricut : MonoBehaviour
         if (intersectCount == 2)
         {
 
-            return true;
+            return intersectCount;
         }
 
         else
@@ -590,7 +610,7 @@ public class tricut : MonoBehaviour
 
 
 
-        return false;
+        return intersectCount;
     }
 
 
@@ -650,6 +670,34 @@ public class tricut : MonoBehaviour
 
 
 
+    private int paralleledEdgeIndex(int index, Vector3 incisionStart,Vector3 incisionend,Mesh mesh)
+    {
+        Vector3[] vertices = mesh.vertices;
+        int[] triangles = mesh.triangles;
+        float[] results = new float[3];
+        results[0] = Vector3.Angle(WorldToLocal.MultiplyPoint3x4(incisionend - incisionStart), vertices[triangles[index*3]] - vertices[triangles[index*3+1]]);
+        results[1] = Vector3.Angle(WorldToLocal.MultiplyPoint3x4(incisionend - incisionStart), vertices[triangles[index*3]] - vertices[triangles[index*3+2]]);
+        results[2] = Vector3.Angle(WorldToLocal.MultiplyPoint3x4(incisionend - incisionStart), vertices[triangles[index*3+1]] - vertices[triangles[index*3+2]]);
+
+        return Array.IndexOf(results, results.Min());
+    }
+
+
+    private bool getSideOfTriangle(int[] triangles,int index,Vector3[] verts, Plane plane)
+    {
+        int PositiveCounter = 0;
+        Vector3 v1 = localToWorld.MultiplyPoint3x4(verts[triangles[index * 3]]);
+        Vector3 v2 = localToWorld.MultiplyPoint3x4(verts[triangles[index * 3 + 1]]);
+        Vector3 v3 = localToWorld.MultiplyPoint3x4(verts[triangles[index * 3 + 2]]);
+
+        if (plane.GetSide(v1)) PositiveCounter++;
+        if (plane.GetSide(v2)) PositiveCounter++;
+        if (plane.GetSide(v3)) PositiveCounter++;
+
+        if (PositiveCounter >= 2) return true;
+
+        return false;
+    }
 
 
     // Update is called once per frame
@@ -672,7 +720,6 @@ public class tricut : MonoBehaviour
                 if (!relatedTri.Contains(hit.triangleIndex))
                 {
                     relatedTri.Add(hit.triangleIndex);
-                    Debug.Log("Current went through triangle: " + relatedTri.Count);
                 }
             }
             incisionStart = hit.point;
@@ -689,7 +736,6 @@ public class tricut : MonoBehaviour
                 if (!relatedTri.Contains(hit.triangleIndex))
                 {
                     relatedTri.Add(hit.triangleIndex);
-                    Debug.Log("Current went through triangle: " + relatedTri.Count);
                 }
             }
             int Count = originalTri.Length;
@@ -701,7 +747,7 @@ public class tricut : MonoBehaviour
 
 
 
-            Vector3 tempPoint = incisionStart + camera.transform.forward;
+            Vector3 tempPoint = incisionStart + gravity;
             cutPlane = new Plane(incisionStart, incisionEnd, tempPoint);
 
 
@@ -718,7 +764,8 @@ public class tricut : MonoBehaviour
             for(int i = 0; i < Count; i++)
             {
                 RaycastHit triangleHit;
-                Ray triangleRay = new Ray(camera.transform.position, incisionStart + i * accumulation - camera.transform.position);
+                RaycastAssistant.transform.position = incisionStart + i * accumulation - gravity*10;
+                Ray triangleRay = new Ray(RaycastAssistant.transform.position, incisionStart + i * accumulation -RaycastAssistant.transform.position);
                 //Debug.DrawRay(camera.transform.position, incisionStart + i * accumulation - camera.transform.position, Color.red,10000f);
                 if(Physics.Raycast(triangleRay, out triangleHit, 1000.0f))
                 {
@@ -730,14 +777,185 @@ public class tricut : MonoBehaviour
 
 
             List<int> cuttedIndices = new List<int>();
+            List<int> paralleledIndices = new List<int>();
+
             Vector3 Intersection;
             for (int i = 0; i < relatedTri.Count; i++)
             {
-                if (relatedTri[i] >= 0 && CutCheck(out Intersection, verts[originalTri[relatedTri[i] * 3]], verts[originalTri[relatedTri[i] * 3 + 1]], verts[originalTri[relatedTri[i] * 3 + 2]]))
+                Vector3 p0 = localToWorld.MultiplyPoint3x4(verts[originalTri[relatedTri[i] * 3]]);
+                Vector3 p1 = localToWorld.MultiplyPoint3x4(verts[originalTri[relatedTri[i] * 3 + 1]]);
+                Vector3 p2 = localToWorld.MultiplyPoint3x4(verts[originalTri[relatedTri[i] * 3 + 2]]);
+                Debug.DrawLine(p0, p1, Color.red, 1000f);
+                Debug.DrawLine(p1, p2, Color.red, 1000f);
+                Debug.DrawLine(p2, p0, Color.red, 1000f);
+
+
+
+                int cutcheckResult = CutCheck(out Intersection, verts[originalTri[relatedTri[i] * 3]], verts[originalTri[relatedTri[i] * 3 + 1]], verts[originalTri[relatedTri[i] * 3 + 2]]);
+                if (cutcheckResult==2)
                 {
                     cuttedIndices.Add(relatedTri[i]);
+
+                }
+                else if (cutcheckResult == 0)
+                {
+                    paralleledIndices.Add(relatedTri[i]);
+
+                    Debug.DrawLine(p0, p1, Color.green, 1000f);
+                    Debug.DrawLine(p1, p2, Color.green, 1000f);
+                    Debug.DrawLine(p2, p0, Color.green, 1000f);
                 }
             }
+
+            //List<int> modifiedIndex = new List<int>();
+            //foreach(var paralleled in paralleledIndices)
+            //{
+
+            //    if (modifiedIndex.Contains(paralleled)) continue;
+
+            //    int edgeIndex = paralleledEdgeIndex(paralleled, incisionStart, incisionEnd, mesh);
+            //    int vertexA, vertexB, vertexC;
+            //    //Case 0 means the edge between A and B is paralleled to the plane, same for the rest 
+            //    //vertexC will only be used to regenerate the triangles
+            //    switch (edgeIndex)
+            //    {
+            //        case 0:
+            //            vertexA = originalTri[paralleled * 3];
+            //            vertexB = originalTri[paralleled * 3 + 1];
+            //            vertexC = originalTri[paralleled * 3 + 2];
+            //            break;
+            //        case 1:
+            //            vertexA = originalTri[paralleled * 3 + 2];
+            //            vertexB = originalTri[paralleled * 3];
+            //            vertexC = originalTri[paralleled * 3 + 1];
+            //            break;
+            //        case 2:
+            //            vertexA = originalTri[paralleled * 3 + 1];
+            //            vertexB = originalTri[paralleled * 3 + 2];
+            //            vertexC = originalTri[paralleled * 3];
+            //            break;
+            //        default:
+            //            vertexA = originalTri[paralleled * 3];
+            //            vertexB = originalTri[paralleled * 3 + 1];
+            //            vertexC = originalTri[paralleled * 3 + 2];
+            //            Debug.LogError("Wrong parallel edge locating result");
+            //            break;
+            //    }
+            //    Vector3[] modifiedVert = new Vector3[verts.Length + 4];
+            //    Array.Copy(verts, 0,modifiedVert,0,verts.Length);
+            //    modifiedVert[verts.Length] = verts[vertexA];
+            //    modifiedVert[verts.Length+1] = verts[vertexB];
+            //    modifiedVert[verts.Length+2] = verts[vertexA];
+            //    modifiedVert[verts.Length+3] = verts[vertexB];
+            //    verts = modifiedVert;
+            //    originalTri[paralleled * 3] = verts.Length - 2;
+            //    originalTri[paralleled * 3 + 1] = verts.Length - 1;
+            //    //vertexC should not be changed
+            //    originalTri[paralleled * 3 + 2] = vertexC;
+
+            //    if (getSideOfTriangle(originalTri,paralleled,verts,cutPlane))
+            //    {
+            //        positive_index.Add(verts.Length - 2);
+            //        positive_index.Add(verts.Length - 1);
+            //        //positive_index.Add(vertexC);
+            //        negative_index.Add(verts.Length - 4);
+            //        negative_index.Add(verts.Length - 3);
+            //    }
+            //    else
+            //    {
+            //        negative_index.Add(verts.Length - 2);
+            //        negative_index.Add(verts.Length - 1);
+            //        //negative_index.Add(vertexC);
+            //        positive_index.Add(verts.Length - 4);
+            //        positive_index.Add(verts.Length - 3);
+            //    }
+
+            //    NativeArray<int> SearchingInput = new NativeArray<int>(originalTri,Allocator.TempJob);
+
+            //    NativeArray<int> sharedIndexA = new NativeArray<int>(1000, Allocator.TempJob);
+            //    NativeArray<int> sharedIndexB = new NativeArray<int>(1000, Allocator.TempJob);
+            //    for(int i = 0; i < 1000; i++)
+            //    {
+            //        sharedIndexA[i] = -1;
+            //        sharedIndexB[i] = -1;
+            //    }
+
+            //    var sharedVertexSearch = new SharedVertexSearch
+            //    {
+            //        triangles = SearchingInput,
+            //        vertexA = vertexA,
+            //        vertexB = vertexB,
+            //        sharedA = sharedIndexA,
+            //        sharedB = sharedIndexB
+            //    };
+
+            //    sharedVertexSearch.Schedule().Complete();
+            //    int[] sharedA = sharedIndexA.ToArray();
+            //    int[] sharedB = sharedIndexB.ToArray();
+            //    //Debug.Log("sharedA size: " + sharedA.Length + " sharedB size: " + sharedB.Length);
+
+
+            //    SearchingInput.Dispose();
+            //    sharedIndexA.Dispose();
+            //    sharedIndexB.Dispose();
+
+            //    int Counter = 0;
+
+            //    while (sharedA[Counter] >= 0)
+            //    {
+            //        modifiedIndex.Add(sharedA[Counter]);
+            //        for (int i = 0; i < 3; i++)
+            //        {
+            //            if (originalTri[sharedA[Counter] * 3 + i] == vertexA)
+            //            {
+            //                if (getSideOfTriangle(originalTri, sharedA[Counter], verts, cutPlane))
+            //                {
+            //                    if (positive_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 2;
+            //                    if (negative_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 4;
+
+            //                }
+            //                else
+            //                {
+            //                    if (positive_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 4;
+            //                    if (negative_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 2;
+            //                }
+
+            //            }
+            //        }
+            //        Counter++;
+            //    }
+            //    Debug.Log("For triangle " + paralleled + ", ones shared A with it: " + Counter);
+
+            //    Counter = 0;
+            //    while (sharedB[Counter] >= 0)
+            //    {
+            //        modifiedIndex.Add(sharedB[Counter]);
+
+            //        for (int i = 0; i < 3; i++)
+            //        {
+            //            if (getSideOfTriangle(originalTri, sharedB[Counter], verts, cutPlane))
+            //            {
+            //                if (positive_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 1;
+            //                if (negative_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 3;
+
+            //            }
+            //            else
+            //            {
+            //                if (positive_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 3;
+            //                if (negative_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 1;
+            //            }
+
+            //            //if (originalTri[sharedB[Counter] * 3 + i] == vertexB) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 1;
+            //        }
+            //        Counter++;
+            //    }
+            //    Debug.Log("For triangle " + paralleled + ", ones shared B with it: " + Counter);
+
+
+            //}
+
+
+
 
 
             Debug.Log("Cuttedindices.size " + cuttedIndices.Count);
@@ -747,13 +965,7 @@ public class tricut : MonoBehaviour
             for (int i = 0; i < cuttedIndices.Count; i++)
             {
                 cuttedIndices[i] += i * 2;
-                //cuttedIndices[i] += i * 6;
-
-                //Debug.Log("Now operating: " + cuttedIndices[i]);
-
-                //VerticesCut(originalTri, verts,submesh, WorldToLocal.MultiplyPoint3x4(incisionStart), WorldToLocal.MultiplyPoint3x4(incisionEnd), cuttedIndices[i], out verts, out originalTri,out submesh);
                 PlaneVC(originalTri, verts, submesh, WorldToLocal.MultiplyPoint3x4(incisionStart), WorldToLocal.MultiplyPoint3x4(incisionEnd), cuttedIndices[i], out verts, out originalTri, out submesh);
-                //TODO: NOW
 
             }
             UpdateMesh(verts, originalTri, submesh);
@@ -785,10 +997,10 @@ public class tricut : MonoBehaviour
             Physics.Raycast(currentPointing, out currentTri, 1000.0f);
             currentIndex = currentTri.triangleIndex;
             //Debug.Log("raycast index: " + currentIndex);
-            CutCheck(out Intersection, verts[originalTri[currentIndex * 3]], verts[originalTri[currentIndex * 3 + 1]], verts[originalTri[currentIndex * 3 + 2]]);
+            //CutCheck(out Intersection, verts[originalTri[currentIndex * 3]], verts[originalTri[currentIndex * 3 + 1]], verts[originalTri[currentIndex * 3 + 2]]);
             //Instantiate(sphere, Intersection, Quaternion.identity, this.transform);
 
-            incisionStart = Intersection;
+            //incisionStart = Intersection;
 
             isUpdating = false;
         }

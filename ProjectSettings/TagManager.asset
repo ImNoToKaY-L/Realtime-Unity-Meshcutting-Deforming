@@ -10,6 +10,7 @@ TagManager:
   - BellyCutted
   - vertex
   - Cutter
+  - RCAssist
   layers:
   - Default
   - TransparentFX

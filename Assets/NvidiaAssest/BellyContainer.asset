@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f2b44126ff4eb34e941cfec7bfae3a0, type: 3}
   m_Name: BellyContainer
   m_EditorClassIdentifier: 
-  m_simpleMode: 1
+  m_simpleMode: 0
   m_simpleMaxParticles: 10000
   m_simpleSubstepCount: 5
   m_simpleIterationCount: 10
@@ -37,27 +37,27 @@ MonoBehaviour:
   m_maxNeighbors: 200
   m_maxContacts: 6
   m_recreateSolver: 0
-  m_substepCount: 5
-  m_iterationCount: 10
+  m_substepCount: 3
+  m_iterationCount: 5
   m_gravity: {x: 0, y: 0, z: 0}
-  m_radius: 0.15
-  m_solidRest: 0.1
-  m_fluidRest: 0.095
-  m_staticFriction: 0.01
-  m_dynamicFriction: 0.01
+  m_radius: 0.3
+  m_solidRest: 0.2
+  m_fluidRest: 0.19
+  m_staticFriction: 0.1
+  m_dynamicFriction: 0.1
   m_particleFriction: 0.1
   m_restitution: 0
-  m_adhesion: 0
+  m_adhesion: 0.1
   m_sleepThreshold: 0
   m_maxSpeed: 3.4028235e+38
   m_maxAcceleration: 3.4028235e+38
   m_shockPropagation: 0
   m_dissipation: 0
-  m_damping: 0
+  m_damping: 0.5
   m_wind: {x: 0, y: 0, z: 0}
   m_drag: 0
   m_lift: 0
-  m_fluid: 1
+  m_fluid: 0
   m_cohesion: 0.025
   m_surfaceTension: 0.01
   m_viscosity: 0
