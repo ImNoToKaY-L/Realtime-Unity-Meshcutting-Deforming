@@ -785,9 +785,9 @@ public class tricut : MonoBehaviour
                 Vector3 p0 = localToWorld.MultiplyPoint3x4(verts[originalTri[relatedTri[i] * 3]]);
                 Vector3 p1 = localToWorld.MultiplyPoint3x4(verts[originalTri[relatedTri[i] * 3 + 1]]);
                 Vector3 p2 = localToWorld.MultiplyPoint3x4(verts[originalTri[relatedTri[i] * 3 + 2]]);
-                Debug.DrawLine(p0, p1, Color.red, 1000f);
-                Debug.DrawLine(p1, p2, Color.red, 1000f);
-                Debug.DrawLine(p2, p0, Color.red, 1000f);
+                //Debug.DrawLine(p0, p1, Color.red, 1000f);
+                //Debug.DrawLine(p1, p2, Color.red, 1000f);
+                //Debug.DrawLine(p2, p0, Color.red, 1000f);
 
 
 
@@ -806,153 +806,6 @@ public class tricut : MonoBehaviour
                     Debug.DrawLine(p2, p0, Color.green, 1000f);
                 }
             }
-
-            //List<int> modifiedIndex = new List<int>();
-            //foreach(var paralleled in paralleledIndices)
-            //{
-
-            //    if (modifiedIndex.Contains(paralleled)) continue;
-
-            //    int edgeIndex = paralleledEdgeIndex(paralleled, incisionStart, incisionEnd, mesh);
-            //    int vertexA, vertexB, vertexC;
-            //    //Case 0 means the edge between A and B is paralleled to the plane, same for the rest 
-            //    //vertexC will only be used to regenerate the triangles
-            //    switch (edgeIndex)
-            //    {
-            //        case 0:
-            //            vertexA = originalTri[paralleled * 3];
-            //            vertexB = originalTri[paralleled * 3 + 1];
-            //            vertexC = originalTri[paralleled * 3 + 2];
-            //            break;
-            //        case 1:
-            //            vertexA = originalTri[paralleled * 3 + 2];
-            //            vertexB = originalTri[paralleled * 3];
-            //            vertexC = originalTri[paralleled * 3 + 1];
-            //            break;
-            //        case 2:
-            //            vertexA = originalTri[paralleled * 3 + 1];
-            //            vertexB = originalTri[paralleled * 3 + 2];
-            //            vertexC = originalTri[paralleled * 3];
-            //            break;
-            //        default:
-            //            vertexA = originalTri[paralleled * 3];
-            //            vertexB = originalTri[paralleled * 3 + 1];
-            //            vertexC = originalTri[paralleled * 3 + 2];
-            //            Debug.LogError("Wrong parallel edge locating result");
-            //            break;
-            //    }
-            //    Vector3[] modifiedVert = new Vector3[verts.Length + 4];
-            //    Array.Copy(verts, 0,modifiedVert,0,verts.Length);
-            //    modifiedVert[verts.Length] = verts[vertexA];
-            //    modifiedVert[verts.Length+1] = verts[vertexB];
-            //    modifiedVert[verts.Length+2] = verts[vertexA];
-            //    modifiedVert[verts.Length+3] = verts[vertexB];
-            //    verts = modifiedVert;
-            //    originalTri[paralleled * 3] = verts.Length - 2;
-            //    originalTri[paralleled * 3 + 1] = verts.Length - 1;
-            //    //vertexC should not be changed
-            //    originalTri[paralleled * 3 + 2] = vertexC;
-
-            //    if (getSideOfTriangle(originalTri,paralleled,verts,cutPlane))
-            //    {
-            //        positive_index.Add(verts.Length - 2);
-            //        positive_index.Add(verts.Length - 1);
-            //        //positive_index.Add(vertexC);
-            //        negative_index.Add(verts.Length - 4);
-            //        negative_index.Add(verts.Length - 3);
-            //    }
-            //    else
-            //    {
-            //        negative_index.Add(verts.Length - 2);
-            //        negative_index.Add(verts.Length - 1);
-            //        //negative_index.Add(vertexC);
-            //        positive_index.Add(verts.Length - 4);
-            //        positive_index.Add(verts.Length - 3);
-            //    }
-
-            //    NativeArray<int> SearchingInput = new NativeArray<int>(originalTri,Allocator.TempJob);
-
-            //    NativeArray<int> sharedIndexA = new NativeArray<int>(1000, Allocator.TempJob);
-            //    NativeArray<int> sharedIndexB = new NativeArray<int>(1000, Allocator.TempJob);
-            //    for(int i = 0; i < 1000; i++)
-            //    {
-            //        sharedIndexA[i] = -1;
-            //        sharedIndexB[i] = -1;
-            //    }
-
-            //    var sharedVertexSearch = new SharedVertexSearch
-            //    {
-            //        triangles = SearchingInput,
-            //        vertexA = vertexA,
-            //        vertexB = vertexB,
-            //        sharedA = sharedIndexA,
-            //        sharedB = sharedIndexB
-            //    };
-
-            //    sharedVertexSearch.Schedule().Complete();
-            //    int[] sharedA = sharedIndexA.ToArray();
-            //    int[] sharedB = sharedIndexB.ToArray();
-            //    //Debug.Log("sharedA size: " + sharedA.Length + " sharedB size: " + sharedB.Length);
-
-
-            //    SearchingInput.Dispose();
-            //    sharedIndexA.Dispose();
-            //    sharedIndexB.Dispose();
-
-            //    int Counter = 0;
-
-            //    while (sharedA[Counter] >= 0)
-            //    {
-            //        modifiedIndex.Add(sharedA[Counter]);
-            //        for (int i = 0; i < 3; i++)
-            //        {
-            //            if (originalTri[sharedA[Counter] * 3 + i] == vertexA)
-            //            {
-            //                if (getSideOfTriangle(originalTri, sharedA[Counter], verts, cutPlane))
-            //                {
-            //                    if (positive_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 2;
-            //                    if (negative_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 4;
-
-            //                }
-            //                else
-            //                {
-            //                    if (positive_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 4;
-            //                    if (negative_index.Contains(verts.Length - 2)) originalTri[sharedA[Counter] * 3 + i] = verts.Length - 2;
-            //                }
-
-            //            }
-            //        }
-            //        Counter++;
-            //    }
-            //    Debug.Log("For triangle " + paralleled + ", ones shared A with it: " + Counter);
-
-            //    Counter = 0;
-            //    while (sharedB[Counter] >= 0)
-            //    {
-            //        modifiedIndex.Add(sharedB[Counter]);
-
-            //        for (int i = 0; i < 3; i++)
-            //        {
-            //            if (getSideOfTriangle(originalTri, sharedB[Counter], verts, cutPlane))
-            //            {
-            //                if (positive_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 1;
-            //                if (negative_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 3;
-
-            //            }
-            //            else
-            //            {
-            //                if (positive_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 3;
-            //                if (negative_index.Contains(verts.Length - 1)) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 1;
-            //            }
-
-            //            //if (originalTri[sharedB[Counter] * 3 + i] == vertexB) originalTri[sharedB[Counter] * 3 + i] = verts.Length - 1;
-            //        }
-            //        Counter++;
-            //    }
-            //    Debug.Log("For triangle " + paralleled + ", ones shared B with it: " + Counter);
-
-
-            //}
 
 
 

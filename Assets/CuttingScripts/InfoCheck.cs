@@ -19,7 +19,7 @@ public class InfoCheck : MonoBehaviour
     {
         if (Input.GetKeyDown("i"))
         {
-            Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
+            Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
             int[] originalTri = mesh.triangles;
             Vector3[] verts = mesh.vertices;
             int[] submesh = mesh.GetTriangles(1);
@@ -31,7 +31,7 @@ public class InfoCheck : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            Mesh mesh = transform.GetComponent<MeshFilter>().mesh;
+            Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
             int[] originalTri = mesh.triangles;
             Vector3[] verts = mesh.vertices;
             int[] submesh = mesh.GetTriangles(1);

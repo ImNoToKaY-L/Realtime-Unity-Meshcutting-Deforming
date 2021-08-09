@@ -37,11 +37,14 @@ using Unity.Jobs;
         private Matrix4x4 localToWorld;
         private Matrix4x4 worldToLocal;
         private bool initialised = false;
+        private bool isMoving;
 
 
         KDTree tree;
 
         KDQuery query;
+
+        List<VertexMovement> movingVertices = new List<VertexMovement>();
 
         void Awake()
         {
@@ -102,6 +105,45 @@ using Unity.Jobs;
         }
 
 
+
+        private bool multiplePlaneGetSide(Vector3 Point)
+        {
+            //int positive = 0;
+            //int negative = 0;
+
+            //foreach (var i in TestController.allPlanes)
+            //{
+            //    if (!i.GetSide(Point)) negative++;
+            //    else positive++;
+            //}
+            //if (positive > negative) return true;
+            //else return false;
+
+            return BasicCut.cutPlane.GetSide(Point);
+
+
+        }
+
+        //private bool multiplePlaneGetSide(Vector3 Point)
+        //{
+        //    float positiveSum = 0;
+        //    float negativeSum = 0;
+
+        //    foreach (var i in BasicCut.positive_index)
+        //    {
+        //        positiveSum += Vector3.Distance(Point, vertices[i]);
+        //    }
+
+        //    foreach (var i in BasicCut.negative_index)
+        //    {
+        //        negativeSum += Vector3.Distance(Point, vertices[i]);
+        //    }
+
+        //    return positiveSum > negativeSum;
+        //}
+
+
+
         void Update()
         {
 
@@ -115,12 +157,12 @@ using Unity.Jobs;
             {
                 if (!initialised)
                 {
-                    Mesh mesh = GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh;
+                    Mesh mesh = GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().sharedMesh;
                     vertices = new Vector3[mesh.vertexCount];
                     rendVert = mesh.vertices;
 
                     long StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-
+                    
 
                     NativeArray<Vector3> jobInput = new NativeArray<Vector3>(mesh.vertices, Allocator.TempJob);
                     NativeArray<Vector3> jobOut = new NativeArray<Vector3>(vertices, Allocator.TempJob);
@@ -232,17 +274,14 @@ using Unity.Jobs;
                     for (int i = 0; i < resultIndices.Count; i++)
                     {
 
-                        if (tricut.cutPlane.GetSide(transform.position))
+                        if (multiplePlaneGetSide(transform.position))
                         {
-                            if (tricut.negative_index.Contains(resultIndices[i]) || tricut.bot_index.Contains(resultIndices[i])) continue;
-                            if (tricut.positive_index.Contains(resultIndices[i]))
+                            if (BasicCut.negative_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                            if (BasicCut.positive_index.Contains(resultIndices[i]))
                             {
                                 Vector3 direction = hit.point - vertices[resultIndices[i]];
                                 Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
                                 Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
-                                Vector3.Lerp(rendVert[resultIndices[i]], endRendVert, 0.1f);
-                                Vector3.Lerp(vertices[resultIndices[i]], endVert, 0.1f);
-
                                 rendVert[resultIndices[i]] = endRendVert;
                                 vertices[resultIndices[i]] = endVert;
                                 continue;
@@ -250,15 +289,13 @@ using Unity.Jobs;
                         }
                         else
                         {
-                            if (tricut.positive_index.Contains(resultIndices[i]) || tricut.bot_index.Contains(resultIndices[i])) continue;
-                            if (tricut.negative_index.Contains(resultIndices[i]))
+                            if (BasicCut.positive_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                            if (BasicCut.negative_index.Contains(resultIndices[i]))
                             {
                                 Vector3 direction = hit.point - vertices[resultIndices[i]];
 
                                 Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
                                 Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
-                                Vector3.Lerp(rendVert[resultIndices[i]], endRendVert, 0.1f);
-                                Vector3.Lerp(vertices[resultIndices[i]], endVert, 0.1f);
 
                                 rendVert[resultIndices[i]] = endRendVert;
                                 vertices[resultIndices[i]] = endVert;
@@ -267,14 +304,12 @@ using Unity.Jobs;
                         }
 
 
-                        if (tricut.cutPlane.GetSide(transform.position) == tricut.cutPlane.GetSide(vertices[resultIndices[i]]))
+                        if (multiplePlaneGetSide(transform.position) == multiplePlaneGetSide(vertices[resultIndices[i]]))
                         {
                             Vector3 direction = hit.point - vertices[resultIndices[i]];
 
                             Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
                             Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
-                            Vector3.Lerp(rendVert[resultIndices[i]], endRendVert, 0.1f);
-                            Vector3.Lerp(vertices[resultIndices[i]], endVert, 0.1f);
 
                             rendVert[resultIndices[i]] = endRendVert;
                             vertices[resultIndices[i]] = endVert;

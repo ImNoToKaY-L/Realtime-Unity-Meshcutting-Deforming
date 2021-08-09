@@ -98,7 +98,6 @@ public class ControllerScript_massVer : MonoBehaviour
             fetus.transform.position = new Vector3(180f, -59.4f, 66f);
             fetus.transform.rotation = Quaternion.Euler(-90f, 0f, 90f);
             fetus.transform.localScale = new Vector3(1.8f, 1.8f, 1.8f);
-
         }
 
 
@@ -239,7 +238,6 @@ public class ControllerScript_massVer : MonoBehaviour
                     // disable the sound in Oculus Go
                     if (m_isOculusGo)
                     {
-                        
                         if (sound_effect.isPlaying)
                             sound_effect.Stop();
                     }
