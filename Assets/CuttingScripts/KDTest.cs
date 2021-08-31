@@ -16,7 +16,9 @@ using Unity.Jobs;
     public enum BenchMarkType
     {
         ParalleledBruteForce,
-        KDTree
+        KDTree,
+        ParalleledNoBurst,
+        BruteForce
     }
 
 
@@ -29,15 +31,15 @@ using Unity.Jobs;
 
         [Range(0f, 100f)]
         public float Radius = 0.1f;
+        public int repeatingCount = 0;
 
-        public bool DrawQueryNodes = false;
 
         private Vector3 PreviousPos;
 
         private Matrix4x4 localToWorld;
         private Matrix4x4 worldToLocal;
         private bool initialised = false;
-        private bool isMoving;
+        private bool isMoving = false;
 
 
         KDTree tree;
@@ -50,6 +52,8 @@ using Unity.Jobs;
         {
             localToWorld = GameObject.FindGameObjectWithTag("Belly").transform.localToWorldMatrix;
             worldToLocal = GameObject.FindGameObjectWithTag("Belly").transform.worldToLocalMatrix;
+            if (repeatingCount < GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertexCount) repeatingCount = GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertexCount;
+            Debug.LogWarning("Repeating Count set to a lower value than the original vertex count, now using the vertex count: "+ GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertexCount);
         }
 
 
@@ -74,7 +78,29 @@ using Unity.Jobs;
             }
         }
 
-        [BurstCompile(CompileSynchronously = true,FloatPrecision =FloatPrecision.High)]
+
+
+        private struct Initialisation_noBurst : IJob
+        {
+            [ReadOnly]
+            public NativeArray<Vector3> Input;
+            public Matrix4x4 localToWorldMatrix;
+            public Matrix4x4 worldToLocalMatrix;
+
+            [WriteOnly]
+            public NativeArray<Vector3> Output;
+
+            public void Execute()
+            {
+                for (int i = 0; i < Input.Length; i++)
+                {
+                    Output[i] = localToWorldMatrix.MultiplyPoint3x4(Input[i]);
+                }
+
+            }
+        }
+
+        [BurstCompile(CompileSynchronously = true, FloatPrecision = FloatPrecision.High)]
         private struct BruteForceQuerying : IJob
         {
             [ReadOnly]
@@ -93,7 +119,71 @@ using Unity.Jobs;
 
 
                 int Counter = 0;
-                for(int i = 0; i < WorldPositionVertices.Length; i++)
+                for (int i = 0; i < WorldPositionVertices.Length; i++)
+                {
+                    if (Vector3.Distance(queryingCenter, WorldPositionVertices[i]) <= radius)
+                    {
+                        result[Counter] = i;
+                        Counter++;
+                    }
+                }
+            }
+        }
+
+        //[BurstCompile(CompileSynchronously = true,FloatPrecision =FloatPrecision.High)]
+        //private struct BruteForceQuerying : IJob
+        //{
+        //    [ReadOnly]
+        //    public NativeArray<Vector3> WorldPositionVertices;
+        //    public float radius;
+        //    public Vector3 queryingCenter;
+        //    //Testing
+        //    public int repeatingLength;
+
+        //    [WriteOnly]
+        //    public NativeArray<int> result;
+
+        //    public void Execute()
+        //    {
+        //        for (int i = 0; i < result.Length; i++)
+        //        {
+        //            result[i] = -1;
+        //        }
+
+
+        //        int Counter = 0;
+        //        for(int i = 0; i < repeatingLength; i++)
+        //        {
+        //            if (Vector3.Distance(queryingCenter, (WorldPositionVertices[i%(WorldPositionVertices.Length-1)])) <= radius)
+        //            {
+        //                if (Counter < result.Length-1) {
+        //                    result[Counter] = i % (WorldPositionVertices.Length - 1);
+        //                    Counter++;
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+
+        private struct BruteForceQuerying_noBurst : IJob
+        {
+            [ReadOnly]
+            public NativeArray<Vector3> WorldPositionVertices;
+            public float radius;
+            public Vector3 queryingCenter;
+            [WriteOnly]
+            public NativeArray<int> result;
+
+            public void Execute()
+            {
+                for (int i = 0; i < result.Length; i++)
+                {
+                    result[i] = -1;
+                }
+
+
+                int Counter = 0;
+                for (int i = 0; i < WorldPositionVertices.Length; i++)
                 {
                     if (Vector3.Distance(queryingCenter, WorldPositionVertices[i]) <= radius)
                     {
@@ -123,24 +213,6 @@ using Unity.Jobs;
 
 
         }
-
-        //private bool multiplePlaneGetSide(Vector3 Point)
-        //{
-        //    float positiveSum = 0;
-        //    float negativeSum = 0;
-
-        //    foreach (var i in BasicCut.positive_index)
-        //    {
-        //        positiveSum += Vector3.Distance(Point, vertices[i]);
-        //    }
-
-        //    foreach (var i in BasicCut.negative_index)
-        //    {
-        //        negativeSum += Vector3.Distance(Point, vertices[i]);
-        //    }
-
-        //    return positiveSum > negativeSum;
-        //}
 
 
 
@@ -239,9 +311,8 @@ using Unity.Jobs;
                     {
                         query.Radius(tree, PreviousPos, Radius, resultIndices);
                     }
-                    else
+                    else if(structureType == BenchMarkType.ParalleledBruteForce)
                     {
-                        long timestep = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
                         NativeArray<Vector3> verticesInput = new NativeArray<Vector3>(vertices,Allocator.TempJob);
                         NativeArray<int> result = new NativeArray<int>(vertices.Length,Allocator.TempJob);
@@ -251,8 +322,10 @@ using Unity.Jobs;
                             WorldPositionVertices = verticesInput,
                             radius = Radius,
                             queryingCenter = PreviousPos,
-                            result = result
+                            result = result,
+                            //repeatingLength = repeatingCount
                         };
+                        long timestep = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
                         bfQuerying.Schedule().Complete();
                         int queryingCounter = 0;
@@ -266,11 +339,101 @@ using Unity.Jobs;
 
                         Debug.Log("Paralleled solution cost: "+((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - timestep));
                     }
+                    else if (structureType == BenchMarkType.ParalleledNoBurst)
+                    {
+
+                        NativeArray<Vector3> verticesInput = new NativeArray<Vector3>(vertices, Allocator.TempJob);
+                        NativeArray<int> result = new NativeArray<int>(vertices.Length, Allocator.TempJob);
+
+                        var bfQuerying = new BruteForceQuerying_noBurst
+                        {
+                            WorldPositionVertices = verticesInput,
+                            radius = Radius,
+                            queryingCenter = PreviousPos,
+                            result = result
+                        };
+                        long timestep = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
+                        bfQuerying.Schedule().Complete();
+                        int queryingCounter = 0;
+                        while (result[queryingCounter] >= 0)
+                        {
+                            resultIndices.Add(result[queryingCounter]);
+                            queryingCounter++;
+                        }
+                        verticesInput.Dispose();
+                        result.Dispose();
+
+                        Debug.Log("No Burst paralleled solution cost: " + ((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - timestep));
+                    }
+
+                    else
+                    {
+                        long timestep = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
+                        for (int i = 0; i < repeatingCount; i++)
+                        {
+                            if (Vector3.Distance(PreviousPos, vertices[(i%(vertices.Length-1))]) <= Radius)
+                            {
+                                if (!resultIndices.Contains(i % (vertices.Length - 1))) {
+                                    resultIndices.Add(i % (vertices.Length - 1));
+                                }
+                            }
+                        }
+
+                        Debug.Log("Normal solution cost: " + ((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - timestep));
+
+                    }
 
 
 
                     PreviousPos = transform.position;
                     //Debug.Log("Result Indices size " + resultIndices.Count);
+                    //for (int i = 0; i < resultIndices.Count; i++)
+                    //{
+
+                    //    if (multiplePlaneGetSide(transform.position))
+                    //    {
+                    //        if (BasicCut.negative_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                    //        if (BasicCut.positive_index.Contains(resultIndices[i]))
+                    //        {
+                    //            Vector3 direction = hit.point - vertices[resultIndices[i]];
+                    //            Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
+                    //            Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
+                    //            rendVert[resultIndices[i]] = endRendVert;
+                    //            vertices[resultIndices[i]] = endVert;
+                    //            continue;
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        if (BasicCut.positive_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                    //        if (BasicCut.negative_index.Contains(resultIndices[i]))
+                    //        {
+                    //            Vector3 direction = hit.point - vertices[resultIndices[i]];
+
+                    //            Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
+                    //            Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
+
+                    //            rendVert[resultIndices[i]] = endRendVert;
+                    //            vertices[resultIndices[i]] = endVert;
+                    //            continue;
+                    //        }
+                    //    }
+
+
+                    //    if (multiplePlaneGetSide(transform.position) == multiplePlaneGetSide(vertices[resultIndices[i]]))
+                    //    {
+                    //        Vector3 direction = hit.point - vertices[resultIndices[i]];
+
+                    //        Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
+                    //        Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
+
+                    //        rendVert[resultIndices[i]] = endRendVert;
+                    //        vertices[resultIndices[i]] = endVert;
+                    //    }
+                    //}
+
                     for (int i = 0; i < resultIndices.Count; i++)
                     {
 
@@ -282,7 +445,10 @@ using Unity.Jobs;
                                 Vector3 direction = hit.point - vertices[resultIndices[i]];
                                 Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
                                 Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
-                                rendVert[resultIndices[i]] = endRendVert;
+                                //rendVert[resultIndices[i]] = endRendVert;
+
+                                movingVertices.Add(new VertexMovement(resultIndices[i], endRendVert));
+
                                 vertices[resultIndices[i]] = endVert;
                                 continue;
                             }
@@ -297,7 +463,7 @@ using Unity.Jobs;
                                 Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
                                 Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
 
-                                rendVert[resultIndices[i]] = endRendVert;
+                                movingVertices.Add(new VertexMovement(resultIndices[i], endRendVert));
                                 vertices[resultIndices[i]] = endVert;
                                 continue;
                             }
@@ -311,24 +477,15 @@ using Unity.Jobs;
                             Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
                             Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
 
-                            rendVert[resultIndices[i]] = endRendVert;
+                            movingVertices.Add(new VertexMovement(resultIndices[i], endRendVert));
                             vertices[resultIndices[i]] = endVert;
                         }
                     }
-                    
 
-                    
+                    isMoving = true;
 
 
-                    //if (DrawQueryNodes)
-                    //{
-                    //    query.DrawLastQuery();
-                    //}
 
-                    Destroy(GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshCollider>());
-                    GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertices = rendVert;
-                    GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.RecalculateNormals();
-                    GameObject.FindGameObjectWithTag("Belly").AddComponent<MeshCollider>();
 
 
                     if(structureType == BenchMarkType.KDTree)
@@ -341,6 +498,30 @@ using Unity.Jobs;
 
                 }
 
+            }
+
+
+            if (isMoving)
+            {
+
+                float speed = 0.01f;
+                foreach (var i in movingVertices)
+                {
+                    rendVert[i.index] = Vector3.MoveTowards(rendVert[i.index], i.Destination, speed * Time.deltaTime);
+
+                }
+
+                if (rendVert[movingVertices[0].index] == movingVertices[0].Destination)
+                {
+                    movingVertices.Clear();
+                    isMoving = false;
+                }
+
+
+                Destroy(GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshCollider>());
+                GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertices = rendVert;
+                GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.RecalculateNormals();
+                GameObject.FindGameObjectWithTag("Belly").AddComponent<MeshCollider>();
             }
 
 

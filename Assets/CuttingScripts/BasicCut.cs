@@ -197,7 +197,7 @@ public class BasicCut
         newTri[index * 3 + 1] = intersect1;
         newTri[index * 3 + 2] = intersect2;
 
-        projectedPoint = Vector3.Project((newVert[IV] - newVert[intersect1]), (newVert[intersect2] - newVert[intersect1]));
+        //projectedPoint = Vector3.Project((newVert[IV] - newVert[intersect1]), (newVert[intersect2] - newVert[intersect1]));
 
 
         newTri[index * 3 + 3] = GV1;
@@ -491,6 +491,16 @@ public class BasicCut
         Belly.transform.GetComponent<MeshFilter>().mesh.vertices = vertices;
         Belly.transform.GetComponent<MeshFilter>().mesh.SetTriangles(triangles, 0);
         Belly.transform.GetComponent<MeshFilter>().mesh.SetTriangles(submesh, 1);
+
+        for(int i = 0; i < uvs.Length; i++)
+        {
+            if (bot_index.Contains(i))
+            {
+                uvs[i] = new Vector2(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+            }
+        }
+
+        Belly.transform.GetComponent<MeshFilter>().mesh.uv = uvs;
         Belly.transform.GetComponent<MeshFilter>().mesh.RecalculateNormals();
 
         Belly.gameObject.AddComponent<MeshCollider>();

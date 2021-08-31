@@ -9,13 +9,15 @@ public class TestController : MonoBehaviour
     public float incisionDepth;
     public Material[] mat = new Material[2];
     public Vector3 gravity;
+    public int iterationStep = 100;
+
     BasicCut instance;
 
     Plane currentPlane;
     public static List<Plane> allPlanes;
 
     private List<VertexMovement> movingVertices = new List<VertexMovement>();
-
+    private int updateCounter = 0;
 
 
 
@@ -28,8 +30,25 @@ public class TestController : MonoBehaviour
 
         allPlanes = new List<Plane>();
     }
+    
+    
 
-    // Update is called once per frame
+    
+    // ref: http://wiki.unity3d.com/index.php/Mathfx#C.23_-_Mathfx.cs
+    public static float Berp(float start, float end, float value)
+    {
+        value = Mathf.Clamp01(value);
+        value = (Mathf.Sin(value * Mathf.PI * (0.2f + 2.5f * value * value * value)) * Mathf.Pow(1f - value, 2.2f) + value) * (1f + (1.2f * (1f - value)));
+        return start + (end - start) * value;
+    }
+
+    public static Vector3 Berp(Vector3 start, Vector3 end, float value)
+    {
+        return new Vector3(Berp(start.x, end.x, value), Berp(start.y, end.y, value), Berp(start.z, end.z, value));
+    }
+
+
+
     void Update()
     {
         Mesh mesh = instance.Belly.transform.GetComponent<MeshFilter>().mesh;
@@ -178,23 +197,24 @@ public class TestController : MonoBehaviour
             {
                 if (BasicCut.positive_index.Contains(i))
                 {
-                    movingVertices.Add(new VertexMovement(i, verts[i] + instance.WorldToLocal.MultiplyPoint3x4(BasicCut.cutPlane.normal) * 0.003f));
+                    //movingVertices.Add(new VertexMovement(i, verts[i] + instance.WorldToLocal.MultiplyPoint3x4(BasicCut.cutPlane.normal) * 0.003f));
+                    movingVertices.Add(new VertexMovement(i, verts[i] + BasicCut.cutPlane.normal * 0.003f));
                     continue;
                 }
                 else if (BasicCut.negative_index.Contains(i))
                 {
-                    movingVertices.Add(new VertexMovement(i, verts[i] - instance.WorldToLocal.MultiplyPoint3x4(BasicCut.cutPlane.normal) * 0.003f));
+                    movingVertices.Add(new VertexMovement(i, verts[i] - BasicCut.cutPlane.normal * 0.003f));
                     continue;
                 }
 
                 if (BasicCut.cutPlane.GetSide(instance.localToWorld.MultiplyPoint3x4(verts[i])))
                 {
-                    movingVertices.Add(new VertexMovement(i, verts[i] + instance.WorldToLocal.MultiplyPoint3x4(BasicCut.cutPlane.normal) * 0.003f));
+                    movingVertices.Add(new VertexMovement(i, verts[i] + BasicCut.cutPlane.normal * 0.003f));
 
                 }
                 else
                 {
-                    movingVertices.Add(new VertexMovement(i, verts[i] - instance.WorldToLocal.MultiplyPoint3x4(BasicCut.cutPlane.normal)* 0.003f));
+                    movingVertices.Add(new VertexMovement(i, verts[i] - BasicCut.cutPlane.normal* 0.003f));
 
                 }
             }
@@ -205,6 +225,7 @@ public class TestController : MonoBehaviour
             instance.UpdateMesh(verts, originalTri, submesh);
             //int lastRelatedIndex = instance.relatedTri[instance.relatedTri.Count - 1];
             instance.relatedTri.Clear();
+            updateCounter = 0;
             instance.isUpdating = true;
             instance.isCapturingMovement = false;
 
@@ -224,6 +245,8 @@ public class TestController : MonoBehaviour
 
         if (instance.isUpdating)
         {
+
+            float iterationSpeed = (float)((float)1 / (float)iterationStep);
             Ray currentPointing = new Ray(camera.transform.position, instance.incisionEnd - camera.transform.position);
             //Debug.DrawRay(camera.transform.position, incisionEnd - camera.transform.position, Color.green, 1000f);
             RaycastHit currentTri;
@@ -231,12 +254,15 @@ public class TestController : MonoBehaviour
             Vector3 Intersection;
             Physics.Raycast(currentPointing, out currentTri, 1000.0f);
             currentIndex = currentTri.triangleIndex;
-            float speed = 0.01f;
+            float speed = 1f;
+            //float speed = Berp(0.002f,0.015f,1f);
+
+            //float speed = 0.01f;
             foreach(var i in movingVertices)
             {
-                verts[i.index] = Vector3.MoveTowards(verts[i.index], i.Destination,speed*Time.deltaTime);
-
-
+                //verts[i.index] = Vector3.MoveTowards(verts[i.index], i.Destination, speed * Time.deltaTime);
+                verts[i.index] = Berp(verts[i.index],i.Destination,updateCounter*iterationSpeed);
+                //verts[i.index] = Berp(verts[i.index],i.Destination,0.07f);
             }
 
             //Debug.Log(speed * Time.deltaTime);
@@ -244,11 +270,13 @@ public class TestController : MonoBehaviour
 
 
             instance.incisionStart = currentTri.point;
-
-            if (verts[movingVertices[0].index] == movingVertices[0].Destination)
+            updateCounter++;
+            //Debug.Log("UpdateCounter" + updateCounter);
+            if (verts[movingVertices[0].index] == movingVertices[0].Destination||updateCounter == iterationStep)
             {
                 instance.isUpdating = false;
                 Debug.Log("Update complete");
+                updateCounter = 0;
 
             }
 
