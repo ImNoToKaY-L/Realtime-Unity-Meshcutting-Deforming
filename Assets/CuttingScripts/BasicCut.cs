@@ -159,7 +159,7 @@ public class BasicCut
     {
 
         int[] newTri = new int[originalTri.Length + 6];
-        Vector3[] newVert = new Vector3[vertices.Length + 6];
+        Vector3[] newVert = new Vector3[vertices.Length + 8];
 
 
 
@@ -210,14 +210,40 @@ public class BasicCut
 
         Vector3 BV1 = newVert[intersect1] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
         Vector3 BV2 = newVert[intersect2] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
+        Vector3 BV3 = newVert[intersect1] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
+        Vector3 BV4 = newVert[intersect2] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
         //Vector3 BV1 = newVert[intersect1] + gravity.normalized * incisionDepth;
         //Vector3 BV2 = newVert[intersect2] + gravity.normalized * incisionDepth;
         newVert[vertices.Length + 4] = BV1;
         newVert[vertices.Length + 5] = BV2;
+        newVert[vertices.Length + 6] = BV3;
+        newVert[vertices.Length + 7] = BV4;
         int B1 = vertices.Length + 4;
         int B2 = vertices.Length + 5;
+        int B3 = vertices.Length + 6;
+        int B4 = vertices.Length + 7;
         bot_index.Add(B1);
         bot_index.Add(B2);
+        bot_index.Add(B3);
+        bot_index.Add(B4);
+
+
+
+        if (cutPlane.GetSide(localToWorld.MultiplyPoint3x4(vertices[IV])))
+        {
+            positive_index.Add(B3);
+            positive_index.Add(B4);
+            negative_index.Add(B1);
+            negative_index.Add(B2);
+
+        }
+        else
+        {
+            positive_index.Add(B1);
+            positive_index.Add(B2);
+            negative_index.Add(B3);
+            negative_index.Add(B4);
+        }
 
         int subLength = 12;
 
@@ -233,12 +259,12 @@ public class BasicCut
         subtri[counter++] = B2;
 
         subtri[counter++] = intersect1;
-        subtri[counter++] = B1;
-        subtri[counter++] = B2;
+        subtri[counter++] = B3;
+        subtri[counter++] = B4;
 
         subtri[counter++] = intersect2;
         subtri[counter++] = intersect1;
-        subtri[counter++] = B2;
+        subtri[counter++] = B4;
 
 
 

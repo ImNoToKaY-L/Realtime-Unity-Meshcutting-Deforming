@@ -1,4 +1,5 @@
 ﻿using DataStructures.ViliWonka.KDTree;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,6 +19,8 @@ public class TestController : MonoBehaviour
 
     private List<VertexMovement> movingVertices = new List<VertexMovement>();
     private int updateCounter = 0;
+    private long updateTimeCost = 0;
+    private long totalTimeCost = 0;
 
 
 
@@ -58,7 +61,7 @@ public class TestController : MonoBehaviour
 
 
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetKeyDown(KeyCode.Return))
         {
             RaycastHit hit;
             Ray ray = camera.ScreenPointToRay(Input.mousePosition);
@@ -74,7 +77,7 @@ public class TestController : MonoBehaviour
         }
 
 
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyUp(KeyCode.Return))
         {
             RaycastHit hit;
             Ray ray = camera.ScreenPointToRay(Input.mousePosition);
@@ -85,7 +88,7 @@ public class TestController : MonoBehaviour
                     instance.relatedTri.Add(hit.triangleIndex);
                 }
             }
-            int Count = originalTri.Length;
+            int Count = verts.Length;
 
             instance.incisionEnd = hit.point;
 
@@ -115,8 +118,10 @@ public class TestController : MonoBehaviour
             Debug.Log("Difference of the s and e " + (instance.incisionStart - instance.incisionEnd));
 
             allPlanes.Add(currentPlane);
-            
 
+
+
+            long start = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
 
             Vector3 accumulation = (instance.incisionEnd - instance.incisionStart) / Count;
@@ -127,14 +132,13 @@ public class TestController : MonoBehaviour
                 instance.RaycastAssistant.transform.position = instance.incisionStart + i * accumulation - gravity * 20;
                 Ray triangleRay = new Ray(instance.RaycastAssistant.transform.position, instance.incisionStart + i * accumulation - instance.RaycastAssistant.transform.position);
                 //Debug.DrawRay(camera.transform.position, instance.incisionStart + i * accumulation - instance.RaycastAssistant.transform.position, Color.red, 10000f);
-                Debug.DrawRay(camera.transform.position, instance.incisionStart - camera.transform.position, Color.red, 10000f);
+                //Debug.DrawRay(camera.transform.position, instance.incisionStart - camera.transform.position, Color.red, 10000f);
                 if (Physics.Raycast(triangleRay, out triangleHit, 1000.0f))
                 {
                     if (!instance.relatedTri.Contains(triangleHit.triangleIndex)) instance.relatedTri.Add(triangleHit.triangleIndex);
 
                 }
             }
-            Debug.Log("Went through: " + instance.relatedTri.Count + " triangles");
 
 
             List<int> cuttedIndices = new List<int>();
@@ -170,6 +174,7 @@ public class TestController : MonoBehaviour
 
 
 
+            long incisioncreating = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
             Debug.Log("Cuttedindices.size " + cuttedIndices.Count);
 
@@ -181,10 +186,18 @@ public class TestController : MonoBehaviour
                 instance.PlaneVC(originalTri, verts, submesh, instance.WorldToLocal.MultiplyPoint3x4(instance.incisionStart), instance.WorldToLocal.MultiplyPoint3x4(instance.incisionEnd), cuttedIndices[i], out verts, out originalTri, out submesh);
 
             }
+
+            Debug.Log("Looping through: " + instance.relatedTri.Count + " triangles, total time cost: " + ((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - start) + " ms");
+            Debug.Log("Incision creation cost: "+((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - incisioncreating) + " ms");
+
+
+
+
             Vector3 midpoint = instance.incisionStart + (instance.incisionEnd - instance.incisionStart) / 2;
             midpoint = instance.WorldToLocal.MultiplyPoint3x4(midpoint);
 
             float radius = Vector3.Distance(instance.WorldToLocal.MultiplyPoint3x4(instance.incisionStart), instance.WorldToLocal.MultiplyPoint3x4(instance.incisionEnd)) /2;
+
 
             KDQuery query = new KDQuery();
             KDTree kdtree = new KDTree(verts, 32);
@@ -246,24 +259,20 @@ public class TestController : MonoBehaviour
         if (instance.isUpdating)
         {
 
-            float iterationSpeed = (float)((float)1 / (float)iterationStep);
             Ray currentPointing = new Ray(camera.transform.position, instance.incisionEnd - camera.transform.position);
             //Debug.DrawRay(camera.transform.position, incisionEnd - camera.transform.position, Color.green, 1000f);
             RaycastHit currentTri;
             int currentIndex;
             Vector3 Intersection;
             Physics.Raycast(currentPointing, out currentTri, 1000.0f);
-            currentIndex = currentTri.triangleIndex;
-            float speed = 1f;
-            //float speed = Berp(0.002f,0.015f,1f);
 
-            //float speed = 0.01f;
-            foreach(var i in movingVertices)
+            foreach (var i in movingVertices)
             {
-                //verts[i.index] = Vector3.MoveTowards(verts[i.index], i.Destination, speed * Time.deltaTime);
-                verts[i.index] = Berp(verts[i.index],i.Destination,updateCounter*iterationSpeed);
-                //verts[i.index] = Berp(verts[i.index],i.Destination,0.07f);
+                verts[i.index] = Berp(verts[i.index], i.Destination, 0.1f);
             }
+
+
+
 
             //Debug.Log(speed * Time.deltaTime);
             instance.UpdateMesh(verts, mesh.GetTriangles(0), submesh);
@@ -275,7 +284,6 @@ public class TestController : MonoBehaviour
             if (verts[movingVertices[0].index] == movingVertices[0].Destination||updateCounter == iterationStep)
             {
                 instance.isUpdating = false;
-                Debug.Log("Update complete");
                 updateCounter = 0;
 
             }

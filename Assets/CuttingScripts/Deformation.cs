@@ -9,20 +9,21 @@ namespace DataStructures.ViliWonka.Tests
 
 using KDTree;
     using System;
+    using System.Text;
     using Unity.Burst;
     using Unity.Collections;
 using Unity.Jobs;
 
     public enum BenchMarkType
     {
-        ParalleledBruteForce,
+        Burst,
         KDTree,
-        ParalleledNoBurst,
-        BruteForce
+        Multithreaded,
+        Linear
     }
 
 
-    public class KDTest : MonoBehaviour
+    public class Deformation : MonoBehaviour
     {
         public BenchMarkType structureType;
         private Vector3[] vertices;
@@ -31,7 +32,6 @@ using Unity.Jobs;
 
         [Range(0f, 100f)]
         public float Radius = 0.1f;
-        public int repeatingCount = 0;
 
 
         private Vector3 PreviousPos;
@@ -41,6 +41,9 @@ using Unity.Jobs;
         private bool initialised = false;
         private bool isMoving = false;
 
+        private long updateTimeCost = 0;
+        private long totalTimeCost = 0;
+        private List<float> BerpRecord = new List<float>();
 
         KDTree tree;
 
@@ -52,13 +55,11 @@ using Unity.Jobs;
         {
             localToWorld = GameObject.FindGameObjectWithTag("Belly").transform.localToWorldMatrix;
             worldToLocal = GameObject.FindGameObjectWithTag("Belly").transform.worldToLocalMatrix;
-            if (repeatingCount < GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertexCount) repeatingCount = GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertexCount;
-            Debug.LogWarning("Repeating Count set to a lower value than the original vertex count, now using the vertex count: "+ GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertexCount);
         }
 
 
         [BurstCompile(CompileSynchronously = true)]
-        private struct Initialisation : IJob
+        public struct Initialisation : IJob
         {
             [ReadOnly]
             public NativeArray<Vector3> Input;
@@ -80,7 +81,7 @@ using Unity.Jobs;
 
 
 
-        private struct Initialisation_noBurst : IJob
+        public struct Initialisation_noBurst : IJob
         {
             [ReadOnly]
             public NativeArray<Vector3> Input;
@@ -101,7 +102,7 @@ using Unity.Jobs;
         }
 
         [BurstCompile(CompileSynchronously = true, FloatPrecision = FloatPrecision.High)]
-        private struct BruteForceQuerying : IJob
+        public struct BruteForceQuerying : IJob
         {
             [ReadOnly]
             public NativeArray<Vector3> WorldPositionVertices;
@@ -130,42 +131,7 @@ using Unity.Jobs;
             }
         }
 
-        //[BurstCompile(CompileSynchronously = true,FloatPrecision =FloatPrecision.High)]
-        //private struct BruteForceQuerying : IJob
-        //{
-        //    [ReadOnly]
-        //    public NativeArray<Vector3> WorldPositionVertices;
-        //    public float radius;
-        //    public Vector3 queryingCenter;
-        //    //Testing
-        //    public int repeatingLength;
-
-        //    [WriteOnly]
-        //    public NativeArray<int> result;
-
-        //    public void Execute()
-        //    {
-        //        for (int i = 0; i < result.Length; i++)
-        //        {
-        //            result[i] = -1;
-        //        }
-
-
-        //        int Counter = 0;
-        //        for(int i = 0; i < repeatingLength; i++)
-        //        {
-        //            if (Vector3.Distance(queryingCenter, (WorldPositionVertices[i%(WorldPositionVertices.Length-1)])) <= radius)
-        //            {
-        //                if (Counter < result.Length-1) {
-        //                    result[Counter] = i % (WorldPositionVertices.Length - 1);
-        //                    Counter++;
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
-        private struct BruteForceQuerying_noBurst : IJob
+       public struct BruteForceQuerying_noBurst : IJob
         {
             [ReadOnly]
             public NativeArray<Vector3> WorldPositionVertices;
@@ -198,16 +164,7 @@ using Unity.Jobs;
 
         private bool multiplePlaneGetSide(Vector3 Point)
         {
-            //int positive = 0;
-            //int negative = 0;
 
-            //foreach (var i in TestController.allPlanes)
-            //{
-            //    if (!i.GetSide(Point)) negative++;
-            //    else positive++;
-            //}
-            //if (positive > negative) return true;
-            //else return false;
 
             return BasicCut.cutPlane.GetSide(Point);
 
@@ -225,7 +182,7 @@ using Unity.Jobs;
             if (Physics.Raycast(mouseray, out mousehit, 1000f) && mousehit.transform.tag.Equals("Belly"))  
             transform.position = mousehit.point;
 
-            if (Input.GetKeyDown("i"))
+            if (Input.GetKeyUp(KeyCode.Return))
             {
                 if (!initialised)
                 {
@@ -266,6 +223,7 @@ using Unity.Jobs;
                     {
                         PreviousPos = transform.position;
                         StartOfInitialisation = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
                         tree = new KDTree(vertices, 32);
                         Debug.Log("KDTree initialise cost: " + (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - StartOfInitialisation));
                     }
@@ -284,7 +242,7 @@ using Unity.Jobs;
             }
 
 
-            if (Input.GetKeyDown("a"))
+            if (Input.GetKeyDown("d"))
             {
                 PreviousPos = transform.position;
 
@@ -292,7 +250,7 @@ using Unity.Jobs;
 
 
 
-            if (Input.GetKeyUp("a"))
+            if (Input.GetKeyUp("d"))
             {
                 RaycastHit hit;
                 Ray ray = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
@@ -309,9 +267,13 @@ using Unity.Jobs;
 
                     if(structureType == BenchMarkType.KDTree)
                     {
+                        long start = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
                         query.Radius(tree, PreviousPos, Radius, resultIndices);
+
+                        Debug.Log("KDTree querying cost: " + ((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - start));
                     }
-                    else if(structureType == BenchMarkType.ParalleledBruteForce)
+                    else if(structureType == BenchMarkType.Burst)
                     {
 
                         NativeArray<Vector3> verticesInput = new NativeArray<Vector3>(vertices,Allocator.TempJob);
@@ -339,7 +301,7 @@ using Unity.Jobs;
 
                         Debug.Log("Paralleled solution cost: "+((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - timestep));
                     }
-                    else if (structureType == BenchMarkType.ParalleledNoBurst)
+                    else if (structureType == BenchMarkType.Multithreaded)
                     {
 
                         NativeArray<Vector3> verticesInput = new NativeArray<Vector3>(vertices, Allocator.TempJob);
@@ -371,7 +333,7 @@ using Unity.Jobs;
                     {
                         long timestep = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-                        for (int i = 0; i < repeatingCount; i++)
+                        for (int i = 0; i < vertices.Length; i++)
                         {
                             if (Vector3.Distance(PreviousPos, vertices[(i%(vertices.Length-1))]) <= Radius)
                             {
@@ -388,58 +350,15 @@ using Unity.Jobs;
 
 
                     PreviousPos = transform.position;
-                    //Debug.Log("Result Indices size " + resultIndices.Count);
-                    //for (int i = 0; i < resultIndices.Count; i++)
-                    //{
 
-                    //    if (multiplePlaneGetSide(transform.position))
-                    //    {
-                    //        if (BasicCut.negative_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
-                    //        if (BasicCut.positive_index.Contains(resultIndices[i]))
-                    //        {
-                    //            Vector3 direction = hit.point - vertices[resultIndices[i]];
-                    //            Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
-                    //            Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
-                    //            rendVert[resultIndices[i]] = endRendVert;
-                    //            vertices[resultIndices[i]] = endVert;
-                    //            continue;
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        if (BasicCut.positive_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
-                    //        if (BasicCut.negative_index.Contains(resultIndices[i]))
-                    //        {
-                    //            Vector3 direction = hit.point - vertices[resultIndices[i]];
-
-                    //            Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
-                    //            Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
-
-                    //            rendVert[resultIndices[i]] = endRendVert;
-                    //            vertices[resultIndices[i]] = endVert;
-                    //            continue;
-                    //        }
-                    //    }
-
-
-                    //    if (multiplePlaneGetSide(transform.position) == multiplePlaneGetSide(vertices[resultIndices[i]]))
-                    //    {
-                    //        Vector3 direction = hit.point - vertices[resultIndices[i]];
-
-                    //        Vector3 endRendVert = worldToLocal.MultiplyPoint3x4(localToWorld.MultiplyPoint3x4(rendVert[resultIndices[i]]) + direction * 0.1f);
-                    //        Vector3 endVert = vertices[resultIndices[i]] + direction * 0.1f;
-
-                    //        rendVert[resultIndices[i]] = endRendVert;
-                    //        vertices[resultIndices[i]] = endVert;
-                    //    }
-                    //}
 
                     for (int i = 0; i < resultIndices.Count; i++)
                     {
 
                         if (multiplePlaneGetSide(transform.position))
                         {
-                            if (BasicCut.negative_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                            //if (BasicCut.negative_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                            if (BasicCut.negative_index.Contains(resultIndices[i])) continue;
                             if (BasicCut.positive_index.Contains(resultIndices[i]))
                             {
                                 Vector3 direction = hit.point - vertices[resultIndices[i]];
@@ -455,7 +374,8 @@ using Unity.Jobs;
                         }
                         else
                         {
-                            if (BasicCut.positive_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                            //if (BasicCut.positive_index.Contains(resultIndices[i]) || BasicCut.bot_index.Contains(resultIndices[i])) continue;
+                            if (BasicCut.positive_index.Contains(resultIndices[i])) continue;
                             if (BasicCut.negative_index.Contains(resultIndices[i]))
                             {
                                 Vector3 direction = hit.point - vertices[resultIndices[i]];
@@ -503,18 +423,27 @@ using Unity.Jobs;
 
             if (isMoving)
             {
+                long start = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-                float speed = 0.01f;
+
                 foreach (var i in movingVertices)
                 {
-                    rendVert[i.index] = Vector3.MoveTowards(rendVert[i.index], i.Destination, speed * Time.deltaTime);
+                    rendVert[i.index] = TestController.Berp(rendVert[i.index],i.Destination,0.05f);
 
                 }
+
 
                 if (rendVert[movingVertices[0].index] == movingVertices[0].Destination)
                 {
                     movingVertices.Clear();
+                    Debug.Log("Moving Complete");
+
+
+
+                    //Debug.Log("Moving Complete, average update cost: " + updateTimeCost+"ms, total deforming cost: "+ totalTimeCost+"ms");
                     isMoving = false;
+                    updateTimeCost = 0;
+                    totalTimeCost = 0;
                 }
 
 
@@ -522,6 +451,11 @@ using Unity.Jobs;
                 GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.vertices = rendVert;
                 GameObject.FindGameObjectWithTag("Belly").GetComponent<MeshFilter>().mesh.RecalculateNormals();
                 GameObject.FindGameObjectWithTag("Belly").AddComponent<MeshCollider>();
+
+                //if (updateTimeCost == 0) updateTimeCost = (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - start;
+                //else updateTimeCost = ((DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - start + updateTimeCost) / 2;
+
+                //totalTimeCost += (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - start;
             }
 
 
