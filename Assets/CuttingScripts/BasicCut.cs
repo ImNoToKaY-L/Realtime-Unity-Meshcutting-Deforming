@@ -168,11 +168,16 @@ public class BasicCut
         newVert[vertices.Length + 1] = endPoint;
         newVert[vertices.Length + 2] = startPoint;
         newVert[vertices.Length + 3] = endPoint;
+
+
+        //Indices of the four new vertices
         int intersect1 = spOrder == 1 ? vertices.Length : vertices.Length + 1;
         int intersect2 = spOrder == 1 ? vertices.Length + 1 : vertices.Length;
         int intersect3 = spOrder == 1 ? vertices.Length + 2 : vertices.Length + 3;
         int intersect4 = spOrder == 1 ? vertices.Length + 3 : vertices.Length + 2;
 
+        //Add the new vertices to the positive edge or the negative edge according to the position of IV
+        //since I1 and I2 are assigned with IV, they should be at the same side of the incision
         if (cutPlane.GetSide(localToWorld.MultiplyPoint3x4(vertices[IV])))
         {
             positive_index.Add(intersect1);
@@ -190,14 +195,15 @@ public class BasicCut
         }
 
 
-
-        Vector3 projectedPoint;
+        //Copy the first half of the triangle set
         Array.Copy(originalTri, newTri, index * 3);
+
+
+        //Assigning the triangles, IV-I1-I2, similar with the rest
         newTri[index * 3] = IV;
         newTri[index * 3 + 1] = intersect1;
         newTri[index * 3 + 2] = intersect2;
 
-        //projectedPoint = Vector3.Project((newVert[IV] - newVert[intersect1]), (newVert[intersect2] - newVert[intersect1]));
 
 
         newTri[index * 3 + 3] = GV1;
@@ -208,12 +214,13 @@ public class BasicCut
         newTri[index * 3 + 7] = intersect3;
         newTri[index * 3 + 8] = GV1;
 
+
+        //The four beneath vertices for vertical incisions
         Vector3 BV1 = newVert[intersect1] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
         Vector3 BV2 = newVert[intersect2] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
         Vector3 BV3 = newVert[intersect1] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
         Vector3 BV4 = newVert[intersect2] + WorldToLocal.MultiplyPoint3x4(gravity) * incisionDepth;
-        //Vector3 BV1 = newVert[intersect1] + gravity.normalized * incisionDepth;
-        //Vector3 BV2 = newVert[intersect2] + gravity.normalized * incisionDepth;
+
         newVert[vertices.Length + 4] = BV1;
         newVert[vertices.Length + 5] = BV2;
         newVert[vertices.Length + 6] = BV3;
@@ -228,7 +235,7 @@ public class BasicCut
         bot_index.Add(B4);
 
 
-
+        //Add the lower vertices to the corresponding edges
         if (cutPlane.GetSide(localToWorld.MultiplyPoint3x4(vertices[IV])))
         {
             positive_index.Add(B3);
@@ -250,6 +257,8 @@ public class BasicCut
         subtri = new int[subLength];
         int counter = 0;
 
+
+        //For submesh construction
         subtri[counter++] = intersect3;
         subtri[counter++] = B2;
         subtri[counter++] = B1;
@@ -442,9 +451,7 @@ public class BasicCut
 
         }
         if (counter != 2) Debug.LogError("INTERSECTION ERROR: " + counter);
-        //Debug.Log("ReshapeCounter for index: "+ index + " is "+reshapeCounter);
-        //Debug.Log("Size of reshaped vertices of : " + index + " is " + reshapeIndex.Count());
-        //if(reshapeCounter!=0) Debug.Log("Index of reshaped vertices of : " + index + " is " + reshapeIndex[0]);
+
 
 
         startPoint = startORendV2(I1, I2) ? WorldToLocal.MultiplyPoint3x4(I1) : WorldToLocal.MultiplyPoint3x4(I2);
@@ -452,7 +459,8 @@ public class BasicCut
 
 
 
-
+        //There are three edges with discriminator of 1, 2 and 3, since the two points must be on two different side, the sum of them
+        //only reference to one possibility of distribution
         int startPointEdge = EdgeLocate(localVertices, startPoint, edges);
         int endPointEdge = EdgeLocate(localVertices, endPoint, edges);
 
@@ -500,7 +508,7 @@ public class BasicCut
         Common_incision_creation(tri, vertices, submesh, startPoint, endPoint, index, individualVert, groupedVert1, groupedVert2, startOrder, endOrder, out newvertices, out newTriangles, out subtri);
 
 
-        //2 means next batch process should move the pointer by 2 since there are two newly created triangles
+        //2 means next batch process should move the pointer by 2 since there are two newly created triangles, could be used for debugging
         return 2;
 
 
@@ -533,7 +541,7 @@ public class BasicCut
 
     }
 
-
+    //Debug function to draw a plane on the editor
     private void DrawPlane(Vector3 position, Vector3 normal)
     {
 

@@ -38,6 +38,7 @@ public class TestController : MonoBehaviour
 
     
     // ref: http://wiki.unity3d.com/index.php/Mathfx#C.23_-_Mathfx.cs
+
     public static float Berp(float start, float end, float value)
     {
         value = Mathf.Clamp01(value);
@@ -60,7 +61,7 @@ public class TestController : MonoBehaviour
         int[] submesh = mesh.GetTriangles(1);
 
 
-
+        // Get the start point of the incision
         if (Input.GetKeyDown(KeyCode.Return))
         {
             RaycastHit hit;
@@ -76,7 +77,8 @@ public class TestController : MonoBehaviour
             instance.isCapturingMovement = true;
         }
 
-
+        //Perform the cut with the two end points of the incision
+        //Might be glitchy if the two points are too near to each other
         if (Input.GetKeyUp(KeyCode.Return))
         {
             RaycastHit hit;
@@ -208,6 +210,7 @@ public class TestController : MonoBehaviour
 
             foreach(var i in vertsToMove)
             {
+                //Check if the vertex is on the postive edge of the incision, similar with the rest after this statement
                 if (BasicCut.positive_index.Contains(i))
                 {
                     //movingVertices.Add(new VertexMovement(i, verts[i] + instance.WorldToLocal.MultiplyPoint3x4(BasicCut.cutPlane.normal) * 0.003f));
@@ -268,6 +271,7 @@ public class TestController : MonoBehaviour
 
             foreach (var i in movingVertices)
             {
+                //Get the new position by the Berp function
                 verts[i.index] = Berp(verts[i.index], i.Destination, 0.1f);
             }
 
